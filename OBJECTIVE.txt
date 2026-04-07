@@ -1,0 +1,34 @@
+APC= Average Production Cost per kilogram (PHP/kg)
+* *$TVC$* = Total Variable Costs (Feed, biologics, fuel, labor, etc.)
+* *$TFC$* = Total Fixed Costs (Depreciation of buildings/equipment, permits, taxes)
+* *$TOC$* = Total Opportunity Costs (Foregone interest on capital or land rent)
+* *$TW$* = Total Weight of pork produced (in kilograms)
+
+
+Salaries and wages for staff
+
+Total variable cost = Feed cost + Labor cost + Water Cost + Electricity Cost 
+Total fixed cost = taxes + permits + Salaries and wages for staff + maintenance 
+
+
+cost per kilogram = 	total production cost / total live weigth produced 
+
+current cost - t is determined by dividing the Total Production Cost (CT 
+l )—which includes all variable, fixed, and opportunity expenses—by the total live weight produced
+
+previous cost t( total live weight)  - This variable refers to the historical baseline cost or the "Current Situation Data" identified at the start of your study [Conversation History]. For your project, this is the ₱350/kg figure that represents the "persistent increase" in pork production costs [Conversation History]. It serves as the standard for "economic evaluations of the system
+
+% change  =(Current Cost−Previous Cost/ previous cost)  x 100
+​
+ % change - percentage of cost reduction
+
+
+represents the Cost per Kilogram  calculated for the most recent production batch (l) It is determined by dividing the Total Production Cost (CTl ) 
+which includes all variable, fixed, and opportunity expenses—by the total live weight produced 
+ This figure is the updated data point used to "verify the production process step by step" and assess the impact of your app's features
+
+
+
+
+
+in my current update to my systen is im a half way but too far in my process in my system im alrady making receipt after the hog supplier order a feed to feed supplier 

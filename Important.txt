@@ -1,0 +1,14 @@
+SMTP_USER: jennyvievemahinay@gmail.com
+SMTP_PASS: ymuo dscl tbfo chln
+
+Client ID
+351809246761-nnclki577q6mmp8mn6pve04onjmj4hpa.apps.googleusercontent.com
+
+Client secret
+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
+
+
+
+
+ang VERIFY oTP LOG in   
+lOCATION SEARCH

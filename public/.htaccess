@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /LechGo_Final/public/
+
+# If the requested resource doesn't exist as a file or folder, route to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
