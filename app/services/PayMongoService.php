@@ -13,7 +13,7 @@ class PayMongoService {
     public function __construct($apiKey = null, $conn = null) {
         // Use provided key, or environment variable, or test key
         // IMPORTANT: Must use SECRET key (sk_test_*) for server-side API calls, NOT public key
-        $this->apiKey = $apiKey ?? ($_ENV['PAYMONGO_API_KEY'] ?? 'sk_test_jrZPatNUM42voHDbp7GwKCte');
+        $this->apiKey = $apiKey ?? ($_ENV['PAYMONGO_API_KEY'] ?? '');
         $this->conn = $conn;
 
     /**
