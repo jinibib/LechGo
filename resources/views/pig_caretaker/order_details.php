@@ -28,6 +28,9 @@ if (!$caretaker->findByUserId($user['id']) || $caretaker->id !== $order['caretak
     exit;
 }
 
+
+$currentPage = 'orders';
+
 ?>
 
 <!DOCTYPE html>
@@ -187,8 +190,11 @@ if (!$caretaker->findByUserId($user['id']) || $caretaker->id !== $order['caretak
         }
     </style>
 </head>
-<body class="body-bg">
-    <div class="container mt-lg">
+<body>
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
         <div class="order-detail-container">
             <!-- Header -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
@@ -204,7 +210,7 @@ if (!$caretaker->findByUserId($user['id']) || $caretaker->id !== $order['caretak
             <!-- Alert if response needed -->
             <?php if (($order['order_status'] === 'pending' || $order['order_status'] === 'reviewing_payment') && !$order['caretaker_response']): ?>
             <div class="alert-box">
-                <div class="alert-title">⚠️ Action Required</div>
+                <div class="alert-title">Action Required</div>
                 <div class="alert-text">
                     This order needs your response. Please review the items and payment details below, then accept or reject.
                 </div>
@@ -244,7 +250,7 @@ if (!$caretaker->findByUserId($user['id']) || $caretaker->id !== $order['caretak
                     </div>
                     <div class="detail-box">
                         <div class="detail-label">Contact Number</div>
-                        <div class="detail-value">📞 <?php echo htmlspecialchars($order['supplier_contact']); ?></div>
+                        <div class="detail-value"><?php echo htmlspecialchars($order['supplier_contact']); ?></div>
                     </div>
                     <div class="detail-box">
                         <div class="detail-label">Email</div>
@@ -325,7 +331,6 @@ if (!$caretaker->findByUserId($user['id']) || $caretaker->id !== $order['caretak
                 <a href="/LechGo_Final/public/pig-caretaker/orders" class="btn btn-secondary">← Back to Orders</a>
             </div>
         </div>
-    </div>
 
     <!-- Respond Modal -->
     <div class="respond-modal" id="respondModal">
@@ -410,5 +415,9 @@ if (!$caretaker->findByUserId($user['id']) || $caretaker->id !== $order['caretak
             }
         });
     </script>
+
+    </main>
+
+    </div>
 </body>
 </html>

@@ -12,6 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LechGO - Lechon Supply Chain & Ordering Made Easy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $GLOBALS['baseUrl'] ?? '/LechGo_Final/public'; ?>/styles.css">
 </head>
 <body>
@@ -51,32 +52,32 @@
                 <h2>Why Choose LechGO?</h2>
                 <div class="features-grid">
                     <div class="feature-card">
-                        <div class="feature-icon">🎯</div>
+                        <div class="feature-icon"></div>
                         <h3>Easy Ordering</h3>
                         <p>Browse, select, and order your lechon in just a few clicks. Simple, fast, and transparent.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">✅</div>
+                        <div class="feature-icon"></div>
                         <h3>Verified Partners</h3>
                         <p>All lechoneros and suppliers are verified and rated by our community for quality assurance.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">📍</div>
+                        <div class="feature-icon"></div>
                         <h3>Real-Time Tracking</h3>
                         <p>Track your order from cooking to delivery with live updates and estimated arrival times.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">💳</div>
+                        <div class="feature-icon"></div>
                         <h3>Secure Payments</h3>
                         <p>Flexible payment options with secure processing and buyer protection.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">⭐</div>
+                        <div class="feature-icon"></div>
                         <h3>Ratings & Reviews</h3>
                         <p>See honest reviews from other customers to make informed decisions.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">🚀</div>
+                        <div class="feature-icon"></div>
                         <h3>Fast Delivery</h3>
                         <p>Reliable delivery network ensuring your lechon arrives hot and fresh.</p>
                     </div>
@@ -90,32 +91,32 @@
                 <h2 style="text-align: center; color: var(--primary-red); margin-bottom: var(--spacing-xl);">How It Works</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-lg);">
                     <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">1️⃣</div>
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">1</div>
                         <h4>Create Account</h4>
                         <p style="color: var(--text-gray);">Sign up and verify your email</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">2️⃣</div>
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">2</div>
                         <h4>Browse Menu</h4>
                         <p style="color: var(--text-gray);">Explore available lechon options</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">3️⃣</div>
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">3</div>
                         <h4>Place Order</h4>
                         <p style="color: var(--text-gray);">Select and confirm your order</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">4️⃣</div>
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">4</div>
                         <h4>Pay & Wait</h4>
                         <p style="color: var(--text-gray);">Complete payment and receive updates</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">5️⃣</div>
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">5</div>
                         <h4>Track Status</h4>
                         <p style="color: var(--text-gray);">Monitor cooking and delivery progress</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">6️⃣</div>
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">6</div>
                         <h4>Enjoy & Review</h4>
                         <p style="color: var(--text-gray);">Receive your order and share feedback</p>
                     </div>

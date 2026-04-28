@@ -97,7 +97,18 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         const isPassword = input.type === 'password';
         input.type = isPassword ? 'text' : 'password';
-        button.textContent = isPassword ? '🙈' : '👁️';
+        
+        // Toggle SVG icon
+        const svg = button.querySelector('svg');
+        if (svg) {
+          if (isPassword) {
+            // Show "eye-slash" icon (password visible)
+            svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+          } else {
+            // Show "eye" icon (password hidden)
+            svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+          }
+        }
       });
     }
   });
@@ -487,4 +498,56 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   });
+
+  // ========== Global Logout Confirmation ==========
+
+  // Initialize logout confirmation for any page that has the modal
+  function initLogoutConfirmation() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutModal = document.getElementById('logoutModal');
+    const closeLogoutModal = document.getElementById('closeLogoutModal');
+    const cancelLogout = document.getElementById('cancelLogout');
+    const confirmLogout = document.getElementById('confirmLogout');
+
+    if (logoutBtn && logoutModal) {
+      // Show modal when logout is clicked
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        logoutModal.classList.add('active');
+      });
+
+      // Hide modal functions
+      function hideLogoutModal() {
+        logoutModal.classList.remove('active');
+      }
+
+      // Close modal events
+      if (closeLogoutModal) closeLogoutModal.addEventListener('click', hideLogoutModal);
+      if (cancelLogout) cancelLogout.addEventListener('click', hideLogoutModal);
+
+      // Close modal when clicking outside
+      logoutModal.addEventListener('click', function(e) {
+        if (e.target === logoutModal) {
+          hideLogoutModal();
+        }
+      });
+
+      // Confirm logout
+      if (confirmLogout) {
+        confirmLogout.addEventListener('click', function() {
+          window.location.href = '/LechGo_Final/public/logout';
+        });
+      }
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && logoutModal.classList.contains('active')) {
+          hideLogoutModal();
+        }
+      });
+    }
+  }
+
+  // Initialize logout confirmation
+  initLogoutConfirmation();
 });

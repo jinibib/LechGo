@@ -42,6 +42,7 @@ if ($user) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Receipt - LechGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     <style>
         .receipt-container {
@@ -273,7 +274,7 @@ if ($user) {
 
             <!-- Caretaker Information -->
             <div class="section">
-                <div class="section-title">➡️ To Caretaker</div>
+                <div class="section-title">To Caretaker</div>
                 <div class="info-row">
                     <span class="info-label">Caretaker Name:</span>
                     <span class="info-value"><?php echo htmlspecialchars($order['caretaker_name']); ?></span>
@@ -346,7 +347,7 @@ if ($user) {
 
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <button class="btn btn-primary" onclick="window.print()">🖨️ Print Receipt</button>
+                <button class="btn btn-primary" onclick="window.print()">Print Receipt</button>
                 <button class="btn btn-secondary" onclick="history.back()">← Go Back</button>
             </div>
         </div>

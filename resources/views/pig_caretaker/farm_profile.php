@@ -31,6 +31,7 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Setup Required - LechGO</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     </head>
     <body>
@@ -46,7 +47,7 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
         </header>
         <main class="setup-error-page">
             <div class="setup-error-container">
-                <div class="setup-error-icon">⚠️</div>
+                <div class="setup-error-icon">!</div>
                 <h1 class="setup-error-title">Profile Setup Required</h1>
                 <p class="setup-error-message">
                     Before you can access your farm profile, you need to complete your profile setup.
@@ -69,6 +70,9 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
     exit;
 }
 
+
+$currentPage = 'farm-profile';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -79,32 +83,11 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
 <body>
-    <!-- Header/Navigation -->
-    <header>
-        <div class="header-container">
-            <a href="/LechGo_Final/public/" class="no-underline">
-                <div class="logo">
-                    <img src="/LechGo_Final/public/images/Logo.png" alt="LechGO Logo" class="logo-img">
-                    <div class="logo-text">LechGO</div>
-                </div>
-            </a>
-            <nav>
-                <div class="user-profile">
-                    <div class="user-avatar"><?php echo strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?></div>
-                    <div class="user-info">
-                        <p class="name"><?php echo htmlspecialchars($user['name'] ?? 'User'); ?></p>
-                        <p class="email"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
-                    </div>
-                    <a href="/LechGo_Final/public/logout" class="btn btn-secondary ml-md">Logout</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-
-    <main>
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
         <div class="profile-container">
-            <!-- Back Button -->
-            <a href="/LechGo_Final/public/dashboard" class="back-button">← Back to Dashboard</a>
 
             <!-- Display Flash Messages -->
             <?php if (isset($_SESSION['success'])): ?>
@@ -195,7 +178,7 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
 
             <!-- Security Section -->
             <div class="content-section">
-                <h2 class="section-title">🔒 Security</h2>
+                <h2 class="section-title">Security</h2>
 
                 <div class="security-privacy-section">
                     <p class="security-description">Keep your account secure by regularly changing your password.</p>
@@ -205,7 +188,7 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
 
             <!-- Danger Zone -->
             <div class="content-section danger-zone-section">
-                <h2 class="section-title danger-zone-title">⚠️ Danger Zone</h2>
+                <h2 class="section-title danger-zone-title">Danger Zone</h2>
 
                 <div class="calendar-danger-zone">
                     <p class="danger-title">Delete Account</p>
@@ -216,11 +199,6 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-bottom footer-profile">
-            <p>&copy; 2026 LechGO. All rights reserved.</p>
-        </div>
-    </footer>
+    </div>
 </body>
 </html>

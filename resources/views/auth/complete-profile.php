@@ -14,14 +14,58 @@ if (!$sessionMiddleware->isAuthenticated()) {
     exit;
 }
 
+// Check if profile is already complete for this role
+$role = $user['role'];
+$profileIsComplete = false;
+
+switch ($role) {
+    case 'customer':
+    case 'admin':
+    case 'logistics':
+        // These roles don't need additional profile data
+        $profileIsComplete = true;
+        break;
+    case 'lechonero':
+        require_once APP_PATH . '/models/Lechonero.php';
+        $lechonero = new Lechonero($GLOBALS['conn']);
+        $profileIsComplete = $lechonero->findByUserId($user['id']);
+        break;
+    case 'supplier':
+        require_once APP_PATH . '/models/FeedSupplier.php';
+        $supplier = new FeedSupplier($GLOBALS['conn']);
+        $profileIsComplete = $supplier->findByUserId($user['id']);
+        break;
+    case 'livestock_owner':
+        require_once APP_PATH . '/models/LivestockOwner.php';
+        $owner = new LivestockOwner($GLOBALS['conn']);
+        $profileIsComplete = $owner->findByUserId($user['id']);
+        break;
+    case 'pig_caretaker':
+        require_once APP_PATH . '/models/PigCaretaker.php';
+        $caretaker = new PigCaretaker($GLOBALS['conn']);
+        $profileIsComplete = $caretaker->findByUserId($user['id']);
+        break;
+    case 'feed_distributor':
+        require_once APP_PATH . '/models/FeedDistributor.php';
+        $distributor = new FeedDistributor($GLOBALS['conn']);
+        $profileIsComplete = $distributor->findByUserId($user['id']);
+        break;
+}
+
+// If profile is already complete, redirect to home
+if ($profileIsComplete) {
+    $_SESSION['success'] = 'Your profile is already complete!';
+    header('Location: /LechGo_Final/public/home');
+    exit;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Your Profile - LechGO</title>
-    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
+    <title>Complete Your Profile - LechGO</title>    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
 <body>
     <!-- Header/Navigation -->
@@ -139,6 +183,7 @@ if (!$sessionMiddleware->isAuthenticated()) {
                             id="contact_number"
                             name="contact_number"
                             placeholder="Enter contact number"
+                            value="<?php echo isset($user['phone']) ? htmlspecialchars($user['phone']) : ''; ?>"
                             required
                         >
                         <div class="form-error"></div>
@@ -147,26 +192,35 @@ if (!$sessionMiddleware->isAuthenticated()) {
                 <?php elseif ($user['role'] === 'pig_caretaker'): ?>
                     <!-- Pig Caretaker Fields -->
                     <div class="form-group">
-                        <label for="farm_name">Farm/Piggery Name</label>
-                        <input
-                            type="text"
-                            id="farm_name"
-                            name="farm_name"
-                            placeholder="Enter your farm/piggery name"
-                            required
-                        >
+                        <label for="farm_name">Employer/ Farm Owner</label>
+                        <select id="farm_name" name="farm_name" required>
+                            <option value="">Select existing Owner</option>
+                        </select>
                         <div class="form-error"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="location">Location/Address</label>
-                        <input
-                            type="text"
-                            id="location"
-                            name="location"
-                            placeholder="Enter farm location"
-                            required
-                        >
+                        <label>City</label>
+                        <p class="display-field">Davao City</p>
+                        <input type="hidden" id="city" name="city" value="Davao City" required>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="municipality">Municipality/District</label>
+                        <input type="text" id="municipality" name="municipality" class="display-field" readonly required>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="barangay">Barangay</label>
+                        <input type="text" id="barangay" name="barangay" class="display-field" readonly required>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="street">Street</label>
+                        <input type="text" id="street" name="street" class="display-field" readonly required>
                         <div class="form-error"></div>
                     </div>
 
@@ -177,6 +231,65 @@ if (!$sessionMiddleware->isAuthenticated()) {
                             id="contact_number"
                             name="contact_number"
                             placeholder="Enter contact number"
+                            value="<?php echo isset($user['phone']) ? htmlspecialchars($user['phone']) : ''; ?>"
+                            required
+                        >
+                        <div class="form-error"></div>
+                    </div>
+
+                <?php elseif ($user['role'] === 'feed_distributor'): ?>
+                    <!-- Feed Distributor Fields -->
+                    <div class="form-group">
+                        <label for="business_name">Business Name</label>
+                        <input
+                            type="text"
+                            id="business_name"
+                            name="business_name"
+                            placeholder="Enter your business name"
+                            required
+                        >
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>City</label>
+                        <p class="display-field">Davao City</p>
+                        <input type="hidden" id="city" name="city" value="Davao City" required>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="municipality">Municipality/District</label>
+                        <select id="municipality" name="municipality" required>
+                            <option value="">Select municipality/district</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="barangay">Barangay</label>
+                        <select id="barangay" name="barangay" required>
+                            <option value="">Select barangay</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="street">Street</label>
+                        <select id="street" name="street" required>
+                            <option value="">Select street</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_number">Contact Number</label>
+                        <input
+                            type="tel"
+                            id="contact_number"
+                            name="contact_number"
+                            placeholder="Enter contact number"
+                            value="<?php echo isset($user['phone']) ? htmlspecialchars($user['phone']) : ''; ?>"
                             required
                         >
                         <div class="form-error"></div>
@@ -197,14 +310,33 @@ if (!$sessionMiddleware->isAuthenticated()) {
                     </div>
 
                     <div class="form-group">
-                        <label for="location">Location/Address</label>
-                        <input
-                            type="text"
-                            id="location"
-                            name="location"
-                            placeholder="Enter farm location"
-                            required
-                        >
+                        <label>City</label>
+                        <p class="display-field">Davao City</p>
+                        <input type="hidden" id="city" name="city" value="Davao City" required>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="municipality">Municipality/District</label>
+                        <select id="municipality" name="municipality" required>
+                            <option value="">Select municipality/district</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="barangay">Barangay</label>
+                        <select id="barangay" name="barangay" required>
+                            <option value="">Select barangay</option>
+                        </select>
+                        <div class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="street">Street</label>
+                        <select id="street" name="street" required>
+                            <option value="">Select street</option>
+                        </select>
                         <div class="form-error"></div>
                     </div>
 
@@ -215,6 +347,7 @@ if (!$sessionMiddleware->isAuthenticated()) {
                             id="contact_number"
                             name="contact_number"
                             placeholder="Enter contact number"
+                            value="<?php echo isset($user['phone']) ? htmlspecialchars($user['phone']) : ''; ?>"
                             required
                         >
                         <div class="form-error"></div>
@@ -233,7 +366,7 @@ if (!$sessionMiddleware->isAuthenticated()) {
 
             <!-- Footer Links -->
             <div class="form-footer">
-                <p><a href="/LechGo_Final/public/logout">Logout</a></p>
+                <p><a href="#" id="logoutBtn">Logout</a></p>
             </div>
         </div>
     </main>
@@ -248,8 +381,63 @@ if (!$sessionMiddleware->isAuthenticated()) {
     <script src="/LechGo_Final/public/script.js"></script>
 
     <script>
-        // Only load location scripts for supplier role
-        <?php if ($user['role'] === 'supplier'): ?>
+        // Load location scripts for roles that need location data
+        <?php if ($user['role'] === 'pig_caretaker'): ?>
+        
+        const BASE_API = '/LechGo_Final/public/api/locations';
+
+        // Load existing farms on page load for pig caretaker
+        document.addEventListener('DOMContentLoaded', function() {
+            loadExistingFarms();
+
+            // Auto-populate location when farm is selected
+            document.getElementById('farm_name').addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.value) {
+                    const location = selectedOption.dataset.location;
+                    if (location) {
+                        // Parse location: "Street, Barangay, Municipality, City"
+                        const parts = location.split(', ');
+                        if (parts.length >= 4) {
+                            document.getElementById('street').value = parts[0];
+                            document.getElementById('barangay').value = parts[1];
+                            document.getElementById('municipality').value = parts[2];
+                        }
+                    }
+                } else {
+                    // Clear fields if no farm selected
+                    document.getElementById('street').value = '';
+                    document.getElementById('barangay').value = '';
+                    document.getElementById('municipality').value = '';
+                }
+            });
+        });
+
+        /**
+         * Load existing farms from livestock_owners table
+         */
+        function loadExistingFarms() {
+            fetch(`${BASE_API}?action=farms`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = document.getElementById('farm_name');
+                        select.innerHTML = '<option value="">Select existing farm/piggery</option>';
+                        data.data.forEach(farm => {
+                            const option = document.createElement('option');
+                            option.value = farm.farm_name;
+                            option.textContent = farm.farm_name;
+                            option.dataset.location = farm.location;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.error('Failed to load farms:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error loading farms:', error));
+        }
+
+        <?php elseif (in_array($user['role'], ['supplier', 'livestock_owner', 'feed_distributor'])): ?>
 
         const BASE_API = '/LechGo_Final/public/api/locations';
 
@@ -364,5 +552,22 @@ if (!$sessionMiddleware->isAuthenticated()) {
 
         <?php endif; ?>
     </script>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Logout</h2>
+                <button class="modal-close" id="closeLogoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelLogout">Cancel</button>
+                <button class="btn btn-primary" id="confirmLogout">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

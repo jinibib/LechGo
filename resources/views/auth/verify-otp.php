@@ -13,8 +13,7 @@ $otp_email = $sessionMiddleware->getOTPEmail();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Code - LechGO</title>
-    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
+    <title>Verify Code - LechGO</title>    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
 <body>
     <!-- Header/Navigation -->
@@ -52,7 +51,7 @@ $otp_email = $sessionMiddleware->getOTPEmail();
             <!-- Display Flash Messages -->
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-error show">
-                    ✗ <?php echo htmlspecialchars($_SESSION['error']); ?>
+                    <?php echo htmlspecialchars($_SESSION['error']); ?>
                 </div>
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
@@ -94,7 +93,7 @@ $otp_email = $sessionMiddleware->getOTPEmail();
             <!-- Security Info -->
             <div class="otp-security-info">
                 <p>
-                    🔒 <strong>Never share your code with anyone.</strong> LechGO staff will never ask for your code.
+                     <strong>Never share your code with anyone.</strong> LechGO staff will never ask for your code.
                 </p>
             </div>
 

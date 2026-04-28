@@ -9,7 +9,6 @@ if (!$pending_orders) {
 $orders_by_supplier = $pending_orders['orders_by_supplier'];
 $owner = $pending_orders['owner'];
 $delivery_address = $pending_orders['delivery_address'];
-$delivery_notes = $pending_orders['delivery_notes'];
 $user = $_SESSION['user'] ?? null;
 
 // Calculate total
@@ -47,6 +46,7 @@ if (!empty($orders_by_supplier)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment - LechGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     <script src="https://js.paymongo.com/v1/checkout.js"></script>
     <style>
@@ -199,7 +199,7 @@ if (!empty($orders_by_supplier)) {
                         <p class="name"><?php echo htmlspecialchars($user['name'] ?? 'User'); ?></p>
                         <p class="email"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
                     </div>
-                    <a href="/LechGo_Final/public/logout" class="btn btn-secondary ml-md">Logout</a>
+                    <a href="#" class="btn btn-secondary ml-md" id="logoutBtn">Logout</a>
                 </div>
             </nav>
         </div>
@@ -211,7 +211,7 @@ if (!empty($orders_by_supplier)) {
             <a href="/LechGo_Final/public/livestock-owner/checkout" class="back-button">← Back to Checkout</a>
 
             <div style="margin-bottom: var(--spacing-lg);">
-                <h1>💳 Secure Payment</h1>
+                <h1>Secure Payment</h1>
             </div>
 
             <div class="payment-grid">
@@ -253,9 +253,6 @@ if (!empty($orders_by_supplier)) {
 
                         <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: #f5f5f5; border-radius: 4px; font-size: 13px;">
                             <p style="margin: 0 0 var(--spacing-sm) 0;"><strong>Delivery Address:</strong><br><?php echo htmlspecialchars($delivery_address); ?></p>
-                            <?php if (!empty($delivery_notes)): ?>
-                                <p style="margin: 0;"><strong>Delivery Notes:</strong><br><?php echo htmlspecialchars($delivery_notes); ?></p>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -264,14 +261,14 @@ if (!empty($orders_by_supplier)) {
                 <div>
                     <!-- Payment Status Container -->
                     <div id="paymentContainer" class="alert alert-info" style="margin-bottom: var(--spacing-lg);">
-                        ⏳ Initializing payment system...
+                         Initializing payment system...
                     </div>
 
                     <form id="paymentForm" method="POST" action="/LechGo_Final/public/livestock-owner/payment" class="payment-form">
                         <h2 style="margin: 0 0 var(--spacing-lg) 0;">Payment Method</h2>
 
                         <div class="test-info">
-                            <strong>🧪 Test Mode</strong><br>
+                            <strong> Test Mode</strong><br>
                             Card: 4343 4343 4343 4345<br>
                             Exp: 12/25 | CVC: 123<br>
                             Amount: Any amount
@@ -319,6 +316,7 @@ if (!empty($orders_by_supplier)) {
     <script>
         let paymentIntentId = null;
         let clientKey = null;
+        let checkoutUrl = null;
 
         async function initializePayment() {
             try {
@@ -345,11 +343,12 @@ if (!empty($orders_by_supplier)) {
                     throw new Error(data.error || `API Error: ${response.status}`);
                 }
                 
-                if (data.success || data.intentId) {
+                if (data.success && data.intentId && data.checkout_url) {
                     paymentIntentId = data.intentId;
                     clientKey = data.client_key;
+                    checkoutUrl = data.checkout_url;
                     console.log('Payment intent created:', paymentIntentId);
-                    console.log('Client key:', clientKey);
+                    console.log('Checkout URL:', checkoutUrl);
                     
                     // Update button and show ready state
                     const statusDiv = document.getElementById('paymentContainer');
@@ -388,7 +387,7 @@ if (!empty($orders_by_supplier)) {
             }
             
             // Handle PayMongo payments
-            if (!paymentIntentId || !clientKey) {
+            if (!paymentIntentId || !checkoutUrl) {
                 alert('Payment system not ready. Please refresh the page.');
                 return;
             }
@@ -399,19 +398,10 @@ if (!empty($orders_by_supplier)) {
 
             try {
                 console.log('Processing payment with intent:', paymentIntentId);
-                console.log('Client key:', clientKey);
+                console.log('Checkout URL:', checkoutUrl);
                 
-                // Initialize PayMongo Checkout with proper SDK usage
-                const checkout = new Paymongo.Checkout({
-                    key: clientKey,
-                    redirectUrl: window.location.origin + '/LechGo_Final/public/livestock-owner/payment-success'
-                });
-
-                // Redirect to PayMongo payment page
-                checkout.redirect({
-                    id: paymentIntentId,
-                    type: 'payment_intent'
-                });
+                // Redirect to PayMongo checkout
+                window.location.href = checkoutUrl;
 
             } catch (error) {
                 console.error('Payment error:', error);
@@ -436,5 +426,24 @@ if (!empty($orders_by_supplier)) {
             });
         });
     </script>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Logout</h2>
+                <button class="modal-close" id="closeLogoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelLogout">Cancel</button>
+                <button class="btn btn-primary" id="confirmLogout">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/LechGo_Final/public/script.js"></script>
 </body>
 </html>

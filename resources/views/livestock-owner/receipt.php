@@ -10,6 +10,7 @@ $user = $_SESSION['user'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Receipt #<?php echo htmlspecialchars($order['order_number']); ?> - LechGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     <style>
         body {
@@ -186,7 +187,7 @@ $user = $_SESSION['user'];
     <div class="receipt-container">
         <!-- Receipt Header -->
         <div class="receipt-header">
-            <h1>📄 Order Receipt</h1>
+            <h1> Order Receipt</h1>
             <p>Order #<?php echo htmlspecialchars($order['order_number']); ?></p>
             <p><?php echo date('F d, Y \a\t g:i A', strtotime($order['created_at'])); ?></p>
         </div>
@@ -301,21 +302,9 @@ $user = $_SESSION['user'];
                 </div>
             <?php endif; ?>
 
-            <!-- Notes -->
-            <?php if ($order['delivery_notes']): ?>
-                <div class="receipt-section">
-                    <div class="section-title">Delivery Notes</div>
-                    <div class="info-row">
-                        <span class="info-value" style="text-align: left;">
-                            <?php echo nl2br(htmlspecialchars($order['delivery_notes'])); ?>
-                        </span>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <!-- Print Button -->
             <div class="print-button">
-                <button class="btn-print" onclick="window.print();">🖨️ Print Receipt</button>
+                <button class="btn-print" onclick="window.print();">Print Receipt</button>
             </div>
         </div>
     </div>

@@ -14,6 +14,7 @@ $verification_email = $sessionMiddleware->getVerificationEmail();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Email - LechGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
 <body>
@@ -35,7 +36,7 @@ $verification_email = $sessionMiddleware->getVerificationEmail();
             <div class="auth-header">
                 <h2>Verify Your Email</h2>
                 <p>We sent a verification link to</p>
-                <p style="font-weight: 600; color: var(--primary-red); margin-top: var(--spacing-sm);">
+                <p style="font-weight: 600; color: var(--primary-red); margin-top: 0.5rem;">
                     <?php 
                     if ($verification_email) {
                         // Mask email address
@@ -52,28 +53,28 @@ $verification_email = $sessionMiddleware->getVerificationEmail();
             <!-- Display Flash Messages -->
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success show">
-                    ✓ <?php echo htmlspecialchars($_SESSION['success']); ?>
+                    <?php echo htmlspecialchars($_SESSION['success']); ?>
                 </div>
                 <?php unset($_SESSION['success']); ?>
             <?php endif; ?>
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-error show">
-                    ✗ <?php echo htmlspecialchars($_SESSION['error']); ?>
+                    <?php echo htmlspecialchars($_SESSION['error']); ?>
                 </div>
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
 
-            <div style="background-color: var(--pale-red); padding: var(--spacing-lg); border-radius: var(--radius-lg); margin: var(--spacing-lg) 0; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">📧</div>
-                <p style="font-size: 1rem; color: var(--text-gray);">
+            <div style="background-color: var(--pale-red); padding: 1rem; border-radius: var(--radius-lg); margin: 1rem 0; text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;"></div>
+                <p style="font-size: 0.95rem; color: var(--text-gray); margin: 0;">
                     Check your email inbox (and spam folder) for the verification link. Click the link to verify your email address and continue to the next step.
                 </p>
             </div>
 
             <!-- Resend Email Section -->
-            <div style="text-align: center; margin: var(--spacing-lg) 0;">
-                <p style="color: var(--text-gray); margin-bottom: var(--spacing-md);">Didn't receive the email?</p>
+            <div style="text-align: center; margin: 1rem 0;">
+                <p style="color: var(--text-gray); margin-bottom: 0.75rem;">Didn't receive the email?</p>
                 <button class="btn btn-secondary btn-resend" style="cursor: pointer;">
                     Resend Verification Email
                 </button>

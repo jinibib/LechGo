@@ -1,4 +1,6 @@
 <?php
+$currentPage = 'product-inventory';
+
 $sessionMiddleware = new Session();
 $user = $sessionMiddleware->getUser();
 
@@ -55,6 +57,32 @@ $result = $stmt->get_result();
 $supplier_info = $result->fetch_assoc();
 $stmt->close();
 
+// Get all non-imported orders from feed distributors (any status except cancelled)
+$importable_orders = [];
+// Auto-add column if missing
+$GLOBALS['conn']->query("ALTER TABLE feed_distributor_orders ADD COLUMN IF NOT EXISTS imported_to_inventory tinyint(1) NOT NULL DEFAULT 0");
+
+$stmt = $GLOBALS['conn']->prepare(
+    "SELECT fdo.id, fdo.order_number, fdo.created_at, fdo.total_amount,
+            fdo.order_status, fdo.imported_to_inventory,
+            fd.business_name AS distributor_name,
+            COUNT(fdoi.id) AS item_count
+     FROM feed_distributor_orders fdo
+     JOIN feed_distributors fd ON fdo.distributor_id = fd.id
+     LEFT JOIN feed_distributor_order_items fdoi ON fdo.id = fdoi.order_id
+     WHERE fdo.buyer_user_id = ?
+       AND fdo.order_status != 'cancelled'
+       AND (fdo.imported_to_inventory = 0 OR fdo.imported_to_inventory IS NULL)
+     GROUP BY fdo.id
+     ORDER BY fdo.created_at DESC"
+);
+if ($stmt) {
+    $stmt->bind_param('i', $user['id']);
+    $stmt->execute();
+    $importable_orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,36 +90,15 @@ $stmt->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Inventory - LechGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
 <body>
-    <!-- Header/Navigation -->
-    <header>
-        <div class="header-container">
-            <a href="/LechGo_Final/public/" class="no-underline">
-                <div class="logo">
-                    <img src="/LechGo_Final/public/images/Logo.png" alt="LechGO Logo" class="logo-img">
-                    <div class="logo-text">LechGO</div>
-                </div>
-            </a>
-            <nav>
-                <div class="user-profile">
-                    <div class="user-avatar"><?php echo strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?></div>
-                    <div class="user-info">
-                        <p class="name"><?php echo htmlspecialchars($user['name'] ?? 'User'); ?></p>
-                        <p class="email"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
-                    </div>
-                    <a href="/LechGo_Final/public/logout" class="btn btn-secondary ml-md">Logout</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-
-    <main>
-        <div style="max-width: 1200px; margin: 0 auto; padding: var(--spacing-lg);">
-            <!-- Back Button -->
-            <a href="/LechGo_Final/public/dashboard" class="back-button">← Back to Dashboard</a>
-
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
+        <div style="max-width: 100%; margin: 0; padding: var(--spacing-md) 0;">
             <!-- Display Messages -->
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success show">
@@ -141,9 +148,69 @@ $stmt->close();
                 </div>
             </div>
 
+            <!-- Import from Orders -->
+            <?php if (!empty($importable_orders)): ?>
+            <div style="background:#fff8f0;border:1.5px solid #f39c12;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div>
+                        <h2 style="margin:0;font-size:16px;color:#856404;">Import Orders to Inventory</h2>
+                        <p style="margin:4px 0 0 0;font-size:13px;color:#a07000;"><?php echo count($importable_orders); ?> order(s) from Feed Distributors</p>
+                    </div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#fef3cd;">
+                            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#856404;border-bottom:1px solid #f0d080;">Order</th>
+                            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#856404;border-bottom:1px solid #f0d080;">From</th>
+                            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#856404;border-bottom:1px solid #f0d080;">Items</th>
+                            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#856404;border-bottom:1px solid #f0d080;">Total</th>
+                            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#856404;border-bottom:1px solid #f0d080;">Status</th>
+                            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#856404;border-bottom:1px solid #f0d080;">Date</th>
+                            <th style="padding:8px 12px;border-bottom:1px solid #f0d080;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($importable_orders as $io): ?>
+                        <?php $is_delivered = $io['order_status'] === 'delivered'; ?>
+                        <tr id="import-row-<?php echo $io['id']; ?>">
+                            <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #fde8a0;">
+                                <strong>#<?php echo $io['id']; ?></strong>
+                                <?php if ($io['order_number']): ?>
+                                    <br><small style="color:#aaa;"><?php echo htmlspecialchars($io['order_number']); ?></small>
+                                <?php endif; ?>
+                            </td>
+                            <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #fde8a0;"><?php echo htmlspecialchars($io['distributor_name']); ?></td>
+                            <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #fde8a0;"><?php echo $io['item_count']; ?> item(s)</td>
+                            <td style="padding:10px 12px;font-size:13px;font-weight:700;color:#27ae60;border-bottom:1px solid #fde8a0;">₱<?php echo number_format($io['total_amount'], 2); ?></td>
+                            <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #fde8a0;">
+                                <span style="padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;
+                                    background:<?php echo $is_delivered ? '#d4edda' : '#fff3cd'; ?>;
+                                    color:<?php echo $is_delivered ? '#155724' : '#856404'; ?>;">
+                                    <?php echo ucfirst(str_replace('_', ' ', $io['order_status'])); ?>
+                                </span>
+                            </td>
+                            <td style="padding:10px 12px;font-size:12px;color:#888;border-bottom:1px solid #fde8a0;"><?php echo date('M d, Y', strtotime($io['created_at'])); ?></td>
+                            <td style="padding:10px 12px;border-bottom:1px solid #fde8a0;">
+                                <?php if ($is_delivered): ?>
+                                    <button onclick="importOrder(<?php echo $io['id']; ?>, this)"
+                                            class="btn btn-primary"
+                                            style="padding:6px 16px;font-size:12px;white-space:nowrap;">
+                                        Import to Inventory
+                                    </button>
+                                <?php else: ?>
+                                    <span style="font-size:12px;color:#aaa;">Waiting for delivery</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
             <!-- Add Product Form -->
             <div class="product-form">
-                <h2 style="margin: 0 0 var(--spacing-lg) 0;">➕ Add New Product</h2>
+                <h2 style="margin: 0 0 var(--spacing-lg) 0;">Add New Product</h2>
                 <form method="POST" action="/LechGo_Final/public/supplier/add-product" enctype="multipart/form-data">
                     <div class="form-grid">
                         <div class="form-group">
@@ -285,12 +352,7 @@ $stmt->close();
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-bottom" style="border-top: 1px solid rgba(255,255,255,0.2);">
-            <p>&copy; 2026 LechGO. All rights reserved.</p>
-        </div>
-    </footer>
+    </div>
 
     <script>
         function editProduct(productId) {
@@ -361,6 +423,41 @@ $stmt->close();
                 .catch(error => alert('Error: ' + error));
             }
         }
+
+        function importOrder(orderId, btn) {
+            if (!confirm('Import all items from this order into your Product Inventory?')) return;
+            btn.disabled = true;
+            btn.textContent = 'Importing...';
+
+            fetch('/LechGo_Final/public/supplier/import-fd-order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'order_id=' + orderId
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById('import-row-' + orderId);
+                    if (row) {
+                        const td = row.querySelector('td:last-child');
+                        td.innerHTML = '<span style="color:#27ae60;font-weight:600;font-size:12px;">✓ Imported (' + data.count + ' item' + (data.count !== 1 ? 's' : '') + ')</span>';
+                    }
+                    // Reload page after short delay so new products appear
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Import to Inventory';
+                }
+            })
+            .catch(() => {
+                alert('Request failed. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Import to Inventory';
+            });
+        }
     </script>
+</body>
+</html>
 </body>
 </html>

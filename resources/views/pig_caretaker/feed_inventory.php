@@ -31,6 +31,7 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Setup Required - LechGO</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     </head>
     <body>
@@ -46,7 +47,7 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
         </header>
         <main class="setup-error-page">
             <div class="setup-error-container">
-                <div class="setup-error-icon">⚠️</div>
+                <div class="setup-error-icon">!</div>
                 <h1 class="setup-error-title">Profile Setup Required</h1>
                 <p class="setup-error-message">
                     Before you can access the feed inventory, you need to complete your farm profile.
@@ -72,6 +73,51 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
 $feedInventory = $pigCaretaker->getFeedInventory();
 $totalFeed = $pigCaretaker->getTotalFeedInStock();
 
+// Check if livestock owner is assigned
+if (!$pigCaretaker->livestock_owner_id) {
+    // Show error if caretaker is not assigned to any livestock owner
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Assignment Required - LechGO</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
+    </head>
+    <body>
+        <header>
+            <div class="header-container">
+                <a href="/LechGo_Final/public/" class="no-underline">
+                    <div class="logo">
+                        <img src="/LechGo_Final/public/images/Logo.png" alt="LechGO Logo" class="logo-img">
+                        <div class="logo-text">LechGO</div>
+                    </div>
+                </a>
+            </div>
+        </header>
+        <main class="setup-error-page">
+            <div class="setup-error-container">
+                <div class="setup-error-icon">!</div>
+                <h1 class="setup-error-title">Awaiting Assignment</h1>
+                <p class="setup-error-message">
+                    You are not yet assigned to a livestock owner.
+                </p>
+                <div class="setup-error-box">
+                    <p>A livestock owner needs to assign you to their farm before you can manage feed inventory. Please contact your livestock owner or farm administrator.</p>
+                </div>
+                <div class="setup-actions">
+                    <a href="/LechGo_Final/public/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+        </main>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 // Get low stock items
 $lowStockItems = [];
 $result = $conn->query("SELECT id, feed_type, quantity_kg, status FROM feed_inventory WHERE caretaker_id = " . $pigCaretaker->id . " AND status = 'low_stock' ORDER BY quantity_kg ASC");
@@ -81,16 +127,18 @@ if ($result) {
 
 // Get received orders from suppliers (orders confirmed by suppliers)
 $receivedOrders = [];
-$query = "SELECT lfo.id, lfo.order_number, lfo.total_amount, lfo.delivery_notes, lfo.created_at,
+$query = "SELECT lfo.id, lfo.order_number, lfo.total_amount, lfo.created_at,
                  u.name AS supplier_name, lfo.order_status
           FROM livestock_feed_orders lfo
           LEFT JOIN suppliers s ON lfo.supplier_id = s.id
           LEFT JOIN users u ON s.user_id = u.id
-          WHERE lfo.order_status IN ('pending', 'confirmed', 'processing', 'ready_for_delivery')
+          WHERE lfo.livestock_owner_id = ? 
+          AND lfo.order_status IN ('pending', 'confirmed', 'processing', 'ready_for_delivery')
           ORDER BY lfo.order_status DESC, lfo.created_at DESC
           LIMIT 20";
 $stmt = $conn->prepare($query);
 if ($stmt) {
+    $stmt->bind_param('i', $pigCaretaker->livestock_owner_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $orders_list = $result->fetch_all(MYSQLI_ASSOC) ?? [];
@@ -112,6 +160,40 @@ if ($stmt) {
     $receivedOrders = $orders_list;
 }
 
+// Collect feed type suggestions: existing inventory + supplier products
+$feedTypeSuggestions = [];
+
+// From existing inventory
+$ft_result = $conn->query("SELECT DISTINCT feed_type FROM feed_inventory WHERE caretaker_id = " . $pigCaretaker->id . " ORDER BY feed_type ASC");
+if ($ft_result) {
+    while ($row = $ft_result->fetch_assoc()) {
+        $feedTypeSuggestions[] = $row['feed_type'];
+    }
+}
+
+// From supplier feed products (via livestock owner's orders)
+$sp_query = "SELECT DISTINCT fp.feed_type 
+             FROM feed_products fp
+             JOIN suppliers s ON fp.supplier_id = s.id
+             JOIN livestock_feed_orders lfo ON lfo.supplier_id = s.id
+             WHERE lfo.livestock_owner_id = ? AND fp.is_active = 1
+             ORDER BY fp.feed_type ASC";
+$sp_stmt = $conn->prepare($sp_query);
+if ($sp_stmt) {
+    $sp_stmt->bind_param('i', $pigCaretaker->livestock_owner_id);
+    $sp_stmt->execute();
+    $sp_result = $sp_stmt->get_result();
+    while ($row = $sp_result->fetch_assoc()) {
+        if (!in_array($row['feed_type'], $feedTypeSuggestions)) {
+            $feedTypeSuggestions[] = $row['feed_type'];
+        }
+    }
+    $sp_stmt->close();
+}
+sort($feedTypeSuggestions);
+
+$currentPage = 'feed-inventory';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -122,44 +204,23 @@ if ($stmt) {
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
 <body>
-    <!-- Header/Navigation -->
-    <header>
-        <div class="header-container">
-            <a href="/LechGo_Final/public/" class="no-underline">
-                <div class="logo">
-                    <img src="/LechGo_Final/public/images/Logo.png" alt="LechGO Logo" class="logo-img">
-                    <div class="logo-text">LechGO</div>
-                </div>
-            </a>
-            <nav>
-                <div class="user-profile">
-                    <div class="user-avatar"><?php echo strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?></div>
-                    <div class="user-info">
-                        <p class="name"><?php echo htmlspecialchars($user['name'] ?? 'User'); ?></p>
-                        <p class="email"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
-                    </div>
-                    <a href="/LechGo_Final/public/logout" class="btn btn-secondary ml-md">Logout</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-
-    <main>
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
         <div class="inventory-container">
-            <!-- Back Button -->
-            <a href="/LechGo_Final/public/dashboard" class="back-button">← Back to Dashboard</a>
 
             <!-- Display Flash Messages -->
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success show">
-                    ✓ <?php echo htmlspecialchars($_SESSION['success']); ?>
+                    <?php echo htmlspecialchars($_SESSION['success']); ?>
                 </div>
                 <?php unset($_SESSION['success']); ?>
             <?php endif; ?>
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-error show">
-                    ✗ <?php echo htmlspecialchars($_SESSION['error']); ?>
+                    <?php echo htmlspecialchars($_SESSION['error']); ?>
                 </div>
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
@@ -167,7 +228,7 @@ if ($stmt) {
             <!-- Page Header -->
             <div class="inventory-header">
                 <div>
-                    <h1>🌾 Feed Inventory Management</h1>
+                    <h1>Feed Inventory Management</h1>
                     <p class="text-gray" style="margin: var(--spacing-sm) 0 0 0;">Track and manage your feed supplies</p>
                 </div>
             </div>
@@ -188,48 +249,15 @@ if ($stmt) {
                 </div>
             </div>
 
-            <!-- Add Feed Form -->
+            <!-- Import Feed Section -->
             <div class="content-section">
                 <div class="section-header">
-                    <h2 class="section-title">Add New Feed</h2>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" onclick="toggleAddForm()">+ Add Feed</button>
-                        <button class="btn btn-secondary" onclick="toggleReceivedOrdersModal()">📦 Import from Orders</button>
-                    </div>
+                    <h2 class="section-title">Add Feed to Inventory</h2>
+                    <button class="btn btn-primary" onclick="toggleReceivedOrdersModal()">📦 Import from Orders</button>
                 </div>
-
-                <form id="addFeedForm" class="form-section" method="POST" action="/LechGo_Final/public/pig-caretaker/add-feed">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="feed_type">Feed Type</label>
-                            <input type="text" id="feed_type" name="feed_type" placeholder="e.g., Corn, Grains, Supplements" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="quantity_kg">Kilogram (kg)</label>
-                            <input type="number" id="quantity_kg" name="quantity_kg" step="0.01" placeholder="Enter quantity" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="unit_price">Unit Price (₱/kg)</label>
-                            <input type="number" id="unit_price" name="unit_price" step="0.01" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="supplier_name">Supplier Name</label>
-                            <input type="text" id="supplier_name" name="supplier_name" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="purchase_date">Purchase Date</label>
-                            <input type="date" id="purchase_date" name="purchase_date">
-                        </div>
-                        <div class="form-group">
-                            <label for="expiry_date">Expiry Date</label>
-                            <input type="date" id="expiry_date" name="expiry_date">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary close-form" onclick="toggleAddForm()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Feed</button>
-                    </div>
-                </form>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">
+                    Import feed from orders placed by your livestock owner. New orders will appear here automatically.
+                </p>
             </div>
 
             <!-- Feed Inventory Table -->
@@ -238,7 +266,7 @@ if ($stmt) {
 
                 <?php if (empty($feedInventory)): ?>
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-icon"></div>
                         <p>No feed inventory recorded yet. Click "Add Feed" to get started!</p>
                     </div>
                 <?php else: ?>
@@ -248,12 +276,9 @@ if ($stmt) {
                                 <tr>
                                     <th>Feed Type</th>
                                     <th>Kilograms (kg)</th>
-                                    <th>Unit Price (₱)</th>
                                     <th>Supplier</th>
                                     <th>Purchase Date</th>
-                                    <th>Expiry Date</th>
                                     <th>Status</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -261,20 +286,12 @@ if ($stmt) {
                                 <tr>
                                     <td style="font-weight: 600;"><?php echo htmlspecialchars($feed['feed_type']); ?></td>
                                     <td><?php echo number_format($feed['quantity_kg'], 2); ?></td>
-                                    <td><?php echo $feed['unit_price'] ? '₱' . number_format($feed['unit_price'], 2) : 'N/A'; ?></td>
                                     <td><?php echo htmlspecialchars($feed['supplier_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo $feed['purchase_date'] ? htmlspecialchars($feed['purchase_date']) : 'N/A'; ?></td>
-                                    <td><?php echo $feed['expiry_date'] ? htmlspecialchars($feed['expiry_date']) : 'N/A'; ?></td>
                                     <td>
                                         <span class="status-badge status-<?php echo str_replace('_', '-', $feed['status']); ?>">
                                             <?php echo str_replace('_', ' ', ucfirst($feed['status'])); ?>
                                         </span>
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="#" class="btn-edit">Edit</a>
-                                            <button class="btn-delete" onclick="deleteFeed(<?php echo $feed['id']; ?>)">Delete</button>
-                                        </div>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -284,6 +301,21 @@ if ($stmt) {
                 <?php endif; ?>
             </div>
         </div>  
+
+            <!-- Low Stock Modal -->
+            <div id="lowStockModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Low Stock Alerts</h2>
+                        <button class="modal-close" onclick="toggleLowStockModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <?php if (empty($lowStockItems)): ?>
+                            <div class="empty-state">
+                                <div class="empty-state-icon"></div>
+                                <p>Great! All feeds have sufficient stock.</p>
+                            </div>
+                        <?php else: ?>
                             <div class="low-stock-list">
                                 <?php foreach ($lowStockItems as $item): ?>
                                     <div class="low-stock-item">
@@ -297,22 +329,23 @@ if ($stmt) {
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-
+                            <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: #fff9f0; border-left: 4px solid #FF6B6B; border-radius: 4px;">
+                                <p style="margin: 0; color: #FF6B6B; font-weight: 600;">ACTION NEEDED: These feeds need to be replenished soon!</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-primary" onclick="toggleLowStockModal()">Close</button>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
     <!-- Received Orders Modal -->
-    <div id="receivedOrdersModal" class="modal" style="display: none;">
+    <div id="receivedOrdersModal" class="modal">
         <div class="modal-content" style="width: 80%; max-height: 80vh; overflow-y: auto;">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 2px solid #ecf0f1;">
-                <h2 style="margin: 0;">📦 Import from Received Orders</h2>
-                <button onclick="toggleReceivedOrdersModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                <h2 style="margin: 0;">Import from Received Orders</h2>
+                <button onclick="toggleReceivedOrdersModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             
             <div class="modal-body" style="padding: 20px;">
@@ -343,16 +376,15 @@ if ($stmt) {
                                         <?php $itemNum = 1; ?>
                                         <?php foreach ($order['items'] as $item): ?>
                                             <div style="font-size: 13px; color: #666; padding: 5px 0; border-bottom: 1px solid #ecf0f1;">
-                                                <strong><?php echo $itemNum; ?>. <?php echo htmlspecialchars($item['feed_type']); ?></strong> - 
-                                                <?php echo number_format($item['quantity_kg'], 2); ?> kg @ 
-                                                ₱<?php echo number_format($item['unit_price'], 2); ?>/kg
+                                                <strong><?php echo $itemNum; ?>. <?php echo htmlspecialchars($item['product_name'] ?? $item['feed_type']); ?></strong> - 
+                                                <?php echo number_format($item['quantity_kg'], 2); ?> kg @
                                             </div>
                                             <?php $itemNum++; ?>
                                         <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
                                 
-                                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="directImportOrder(<?php echo $order['id']; ?>)">📥 Import to Inventory</button>
+                                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="directImportOrder(<?php echo $order['id']; ?>)">Import to Inventory</button>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -362,23 +394,6 @@ if ($stmt) {
     </div>
 
     <style>
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
         .modal-content {
             background: white;
             border-radius: 8px;
@@ -395,26 +410,10 @@ if ($stmt) {
         }
     </style>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-bottom" style="border-top: 1px solid rgba(255,255,255,0.2);">
-            <p>&copy; 2026 LechGO. All rights reserved.</p>
-        </div>
-    </footer>
-
     <script>
-        function toggleAddForm() {
-            const form = document.getElementById('addFeedForm');
-            form.classList.toggle('active');
-        }
-
         function toggleReceivedOrdersModal() {
             const modal = document.getElementById('receivedOrdersModal');
-            if (modal.style.display === 'none') {
-                modal.style.display = 'flex';
-            } else {
-                modal.style.display = 'none';
-            }
+            modal.classList.toggle('active');
         }
 
         async function directImportOrder(orderId) {
@@ -422,7 +421,7 @@ if ($stmt) {
                 // Show loading
                 const button = event.target;
                 button.disabled = true;
-                button.innerHTML = '⏳ Importing...';
+                button.innerHTML = 'Importing...';
 
                 // Call API to import
                 const response = await fetch('/LechGo_Final/public/pig-caretaker/import-from-order', {
@@ -442,7 +441,7 @@ if ($stmt) {
                     toggleReceivedOrdersModal();
                     
                     // Show success message
-                    alert('✓ ' + data.message);
+                    alert(data.message);
                     
                     // Reload page to refresh inventory
                     window.location.reload();
@@ -451,9 +450,9 @@ if ($stmt) {
                 }
             } catch (error) {
                 console.error('Import error:', error);
-                alert('❌ Import failed: ' + error.message);
+                alert('Import failed: ' + error.message);
                 event.target.disabled = false;
-                event.target.innerHTML = '📥 Import to Inventory';
+                event.target.innerHTML = 'Import to Inventory';
             }
         }
 
@@ -492,5 +491,9 @@ if ($stmt) {
             }
         }
     </script>
+
+    </main>
+
+    </div>
 </body>
 </html>

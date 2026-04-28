@@ -47,7 +47,7 @@ class Session
     /**
      * Set user session
      */
-    public function setUser($user_id, $email, $name, $role)
+    public function setUser($user_id, $email, $name, $role, $phone = null)
     {
         $_SESSION['user_id'] = $user_id;
         $_SESSION['user'] = [
@@ -55,6 +55,7 @@ class Session
             'email' => $email,
             'name' => $name,
             'role' => $role,
+            'phone' => $phone,
         ];
     }
 

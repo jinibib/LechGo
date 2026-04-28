@@ -35,6 +35,9 @@ try {
     $reports = [];
 }
 
+
+$currentPage = 'reports';
+
 ?>
 
 <!DOCTYPE html>
@@ -45,8 +48,11 @@ try {
     <title>Submit Report - LechGO</title>
     <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
 </head>
-<body class="body-bg">
-    <div class="container mt-lg">
+<body>
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
         <div style="max-width: 900px; margin: 0 auto;">
             <!-- Header -->
             <div style="margin-bottom: var(--spacing-lg);">
@@ -80,7 +86,7 @@ try {
                     </div>
 
                     <div style="display: flex; gap: var(--spacing-md);">
-                        <button type="submit" class="btn btn-primary">✅ Submit Report</button>
+                        <button type="submit" class="btn btn-primary">Submit Report</button>
                         <a href="/LechGo_Final/public/home" class="btn btn-secondary">← Cancel</a>
                     </div>
                 </form>
@@ -117,6 +123,9 @@ try {
                 <?php endif; ?>
             </div>
         </div>
+
+    </main>
+
     </div>
 </body>
 </html>

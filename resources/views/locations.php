@@ -36,8 +36,7 @@ foreach ($locations as $location) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Davao City Locations - LechGO</title>
-    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
+    <title>Davao City Locations - LechGO</title>    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     <style>
         .locations-container {
             max-width: 1200px;
@@ -127,7 +126,7 @@ foreach ($locations as $location) {
             <nav>
                 <a href="/LechGo_Final/public/dashboard">Dashboard</a>
                 <a href="/LechGo_Final/public/locations">Locations</a>
-                <a href="/LechGo_Final/public/logout">Logout</a>
+                <a href="#" id="logoutBtn">Logout</a>
             </nav>
         </div>
     </header>
@@ -196,6 +195,23 @@ foreach ($locations as $location) {
             <?php endif; ?>
         </div>
     </main>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Logout</h2>
+                <button class="modal-close" id="closeLogoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelLogout">Cancel</button>
+                <button class="btn btn-primary" id="confirmLogout">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>

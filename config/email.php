@@ -19,7 +19,7 @@ define('SMTP_ENCRYPTION', 'tls');
 
 // Gmail credentials - Use App Password (not your regular password)
 define('SMTP_USER', 'jennyvievemahinay@gmail.com');  // Change to your Gmail
-define('SMTP_PASS', '');      // 16-character app password
+define('SMTP_PASS', 'ymuo dscl tbfo chln');      // 16-character app password
 
 // Sender details
 define('MAIL_FROM_NAME', 'LechGO');

@@ -67,8 +67,7 @@ foreach ($orders as $order) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Received Orders - LechGO</title>
-    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
+    <title>Received Orders - LechGO</title>    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">    <link rel="stylesheet" href="/LechGo_Final/public/styles.css">
     <style>
         .status-section {
             margin-bottom: 30px;
@@ -236,33 +235,11 @@ foreach ($orders as $order) {
     </style>
 </head>
 <body>
-    <!-- Header/Navigation -->
-    <header>
-        <div class="header-container">
-            <a href="/LechGo_Final/public/" class="no-underline">
-                <div class="logo">
-                    <img src="/LechGo_Final/public/images/Logo.png" alt="LechGO Logo" class="logo-img">
-                    <div class="logo-text">LechGO</div>
-                </div>
-            </a>
-            <nav>
-                <div class="user-profile">
-                    <div class="user-avatar"><?php echo strtoupper(substr($user['name'] ?? 'U', 0, 1)); ?></div>
-                    <div class="user-info">
-                        <p class="name"><?php echo htmlspecialchars($user['name'] ?? 'User'); ?></p>
-                        <p class="email"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
-                    </div>
-                    <a href="/LechGo_Final/public/logout" class="btn btn-secondary ml-md">Logout</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-
-    <main>
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
         <div class="container">
-            <!-- Back Button -->
-            <a href="/LechGo_Final/public/dashboard" class="back-button">← Back to Dashboard</a>
-
             <!-- Display Messages -->
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success show">
@@ -277,13 +254,13 @@ foreach ($orders as $order) {
             <?php endif; ?>
 
             <div style="margin-bottom: var(--spacing-lg);">
-                <h1>📦 Received Orders</h1>
+                <h1> Received Orders</h1>
                 <p style="color: #666; margin-top: 5px;">Manage orders from livestock owners</p>
             </div>
 
         <?php if (empty($orders)): ?>
             <div class="empty-state">
-                <div class="empty-state-icon">📭</div>
+                <div class="empty-state-icon"></div>
                 <p>No orders received yet.</p>
                 <p style="color: #95a5a6; font-size: 14px;">Livestock owners will place orders here when they're ready to purchase feeds.</p>
             </div>
@@ -294,12 +271,12 @@ foreach ($orders as $order) {
                         <div class="status-title <?php echo $status; ?>">
                             <?php 
                                 $status_icons = [
-                                    'pending' => '⏳',
-                                    'confirmed' => '✓',
-                                    'processing' => '🔄',
-                                    'ready_for_delivery' => '📦',
-                                    'delivered' => '✅',
-                                    'cancelled' => '❌'
+                                    'pending' => '',
+                                    'confirmed' => '',
+                                    'processing' => '',
+                                    'ready_for_delivery' => '',
+                                    'delivered' => '',
+                                    'cancelled' => ''
                                 ];
                                 echo ($status_icons[$status] ?? '•') . ' ' . ucfirst(str_replace('_', ' ', $status)) . ' (' . count($status_orders) . ')';
                             ?>
@@ -355,5 +332,28 @@ foreach ($orders as $order) {
         <?php endif; ?>
         </div>
     </main>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Logout</h2>
+                <button class="modal-close" id="closeLogoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelLogout">Cancel</button>
+                <button class="btn btn-primary" id="confirmLogout">Yes, Logout</button>
+            </div>
+        </div>
+    </div>
+        </div>
+    </main>
+
+    </div>
+
+    <script src="/LechGo_Final/public/script.js"></script>
 </body>
 </html>

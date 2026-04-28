@@ -12,6 +12,7 @@ class PigCaretaker
 
     public $id;
     public $user_id;
+    public $livestock_owner_id;
     public $farm_name;
     public $location;
     public $contact_number;
@@ -42,6 +43,7 @@ class PigCaretaker
             $row = $result->fetch_assoc();
             $this->id = $row['id'];
             $this->user_id = $row['user_id'];
+            $this->livestock_owner_id = $row['livestock_owner_id'];
             $this->farm_name = $row['farm_name'];
             $this->location = $row['location'];
             $this->contact_number = $row['contact_number'];
@@ -89,21 +91,21 @@ class PigCaretaker
     }
 
     /**
-     * Create default pig cages A-E for new caretaker
+     * Create default pig pins 1-7 for new caretaker
      */
     private function createDefaultCages($caretaker_id)
     {
-        $cages = ['A', 'B', 'C', 'D', 'E'];
-        $query = "INSERT INTO pig_cages (caretaker_id, cage_number, current_pig_count, max_capacity, status) 
-                 VALUES (?, ?, 0, 3, 'active')";
+        $pins = ['1', '2', '3', '4', '5', '6', '7'];
+        $query = "INSERT INTO pig_pins (caretaker_id, cage_number, current_pig_count, max_capacity, status) 
+                 VALUES (?, ?, 0, 3, 'inactive')";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {
             throw new Exception("Prepare error: " . $this->conn->error);
         }
 
-        foreach ($cages as $cage) {
-            $stmt->bind_param("is", $caretaker_id, $cage);
+        foreach ($pins as $pin) {
+            $stmt->bind_param("is", $caretaker_id, $pin);
             $stmt->execute();
         }
 
@@ -115,7 +117,7 @@ class PigCaretaker
      */
     public function getPigCages()
     {
-        $query = "SELECT * FROM pig_cages WHERE caretaker_id = ? ORDER BY cage_number ASC";
+        $query = "SELECT * FROM pig_pins WHERE caretaker_id = ? ORDER BY cage_number ASC";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {
@@ -166,7 +168,7 @@ class PigCaretaker
     public function addPigToCage($cage_id, $breed, $age_months, $weight_kg, $health_status = 'healthy')
     {
         // Check cage capacity
-        $cageQuery = "SELECT current_pig_count, max_capacity FROM pig_cages WHERE id = ? AND caretaker_id = ?";
+        $cageQuery = "SELECT current_pig_count, max_capacity FROM pig_pins WHERE id = ? AND caretaker_id = ?";
         $cageStmt = $this->conn->prepare($cageQuery);
         $cageStmt->bind_param("ii", $cage_id, $this->id);
         $cageStmt->execute();
@@ -195,8 +197,8 @@ class PigCaretaker
         $stmt->bind_param("isids", $cage_id, $breed, $age_months, $weight_kg, $health_status);
         
         if ($stmt->execute()) {
-            // Update cage pig count
-            $updateQuery = "UPDATE pig_cages SET current_pig_count = current_pig_count + 1 WHERE id = ?";
+            // Update pin pig count and set active
+            $updateQuery = "UPDATE pig_pins SET current_pig_count = current_pig_count + 1, status = 'active' WHERE id = ?";
             $updateStmt = $this->conn->prepare($updateQuery);
             $updateStmt->bind_param("i", $cage_id);
             $updateStmt->execute();
@@ -236,27 +238,64 @@ class PigCaretaker
     }
 
     /**
-     * Add feed to inventory
+     * Add feed to inventory (upsert: adds to existing row if same feed_type exists)
      */
-    public function addFeedToInventory($feed_type, $quantity_kg, $unit_price = null, $supplier_name = null, $purchase_date = null, $expiry_date = null)
+    public function addFeedToInventory($feed_type, $quantity_kg, $unit_price = null, $supplier_name = null, $purchase_date = null, $expiry_date = null, $product_name = null)
     {
-        $query = "INSERT INTO feed_inventory (caretaker_id, feed_type, quantity_kg, unit_price, supplier_name, purchase_date, expiry_date, status) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'in_stock')";
-        $stmt = $this->conn->prepare($query);
-
-        if (!$stmt) {
+        // Check if a row already exists for this caretaker + feed_type
+        $check = $this->conn->prepare(
+            "SELECT id, quantity_kg FROM feed_inventory WHERE caretaker_id = ? AND feed_type = ? LIMIT 1"
+        );
+        if (!$check) {
             throw new Exception("Prepare error: " . $this->conn->error);
         }
+        $check->bind_param("is", $this->id, $feed_type);
+        $check->execute();
+        $existing = $check->get_result()->fetch_assoc();
+        $check->close();
 
-        $stmt->bind_param("isddsss", $this->id, $feed_type, $quantity_kg, $unit_price, $supplier_name, $purchase_date, $expiry_date);
-        
-        if ($stmt->execute()) {
-            $stmt->close();
-            return $this->conn->insert_id;
-        } else {
-            $stmt->close();
+        if ($existing) {
+            // Update: add quantity, update status, optionally update price/supplier/date/name
+            $new_qty = $existing['quantity_kg'] + $quantity_kg;
+            $status  = $new_qty <= 5 ? 'low_stock' : 'in_stock';
+
+            $upd = $this->conn->prepare(
+                "UPDATE feed_inventory 
+                 SET quantity_kg = ?,
+                     status = ?,
+                     feed_name     = COALESCE(?, feed_name),
+                     unit_price    = COALESCE(?, unit_price),
+                     supplier_name = COALESCE(?, supplier_name),
+                     purchase_date = COALESCE(?, purchase_date),
+                     updated_at    = NOW()
+                 WHERE id = ?"
+            );
+            if (!$upd) {
+                throw new Exception("Prepare error: " . $this->conn->error);
+            }
+            $upd->bind_param("dsssssi", $new_qty, $status, $product_name, $unit_price, $supplier_name, $purchase_date, $existing['id']);
+            if (!$upd->execute()) {
+                throw new Exception("Error updating feed inventory: " . $this->conn->error);
+            }
+            $upd->close();
+            return $existing['id'];
+        }
+
+        // Insert new row
+        $feed_name = $product_name ?? 'Feed';
+        $ins = $this->conn->prepare(
+            "INSERT INTO feed_inventory (caretaker_id, feed_type, feed_name, quantity_kg, unit_price, supplier_name, purchase_date, expiry_date, status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'in_stock')"
+        );
+        if (!$ins) {
+            throw new Exception("Prepare error: " . $this->conn->error);
+        }
+        $ins->bind_param("issddsss", $this->id, $feed_type, $feed_name, $quantity_kg, $unit_price, $supplier_name, $purchase_date, $expiry_date);
+        if (!$ins->execute()) {
             throw new Exception("Error adding feed inventory: " . $this->conn->error);
         }
+        $ins->close();
+        return $this->conn->insert_id;
     }
 
     /**
@@ -264,7 +303,7 @@ class PigCaretaker
      */
     public function getTotalPigCount()
     {
-        $query = "SELECT SUM(current_pig_count) as total FROM pig_cages WHERE caretaker_id = ?";
+        $query = "SELECT SUM(current_pig_count) as total FROM pig_pins WHERE caretaker_id = ?";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {

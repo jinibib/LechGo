@@ -222,4 +222,109 @@ class LivestockOwner {
         $stmt->close();
         return false;
     }
+
+    /**
+     * Get unassigned pig caretakers (not yet assigned to any livestock owner)
+     */
+    public function getUnassignedCaretakers() {
+        $query = "SELECT pc.*, u.name, u.email 
+                  FROM pig_caretakers pc
+                  JOIN users u ON pc.user_id = u.id
+                  WHERE pc.livestock_owner_id IS NULL
+                  ORDER BY u.name ASC";
+        
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            return [];
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $caretakers = [];
+        while ($row = $result->fetch_assoc()) {
+            $caretakers[] = $row;
+        }
+        
+        $stmt->close();
+        return $caretakers;
+    }
+
+    /**
+     * Get assigned pig caretakers for this livestock owner
+     */
+    public function getAssignedCaretakers() {
+        $query = "SELECT pc.*, u.name, u.email 
+                  FROM pig_caretakers pc
+                  JOIN users u ON pc.user_id = u.id
+                  WHERE pc.livestock_owner_id = ?
+                  ORDER BY u.name ASC";
+        
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            return [];
+        }
+        
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $caretakers = [];
+        while ($row = $result->fetch_assoc()) {
+            $caretakers[] = $row;
+        }
+        
+        $stmt->close();
+        return $caretakers;
+    }
+
+    /**
+     * Assign a pig caretaker to this livestock owner
+     */
+    public function assignCaretaker($caretaker_id) {
+        $query = "UPDATE pig_caretakers 
+                  SET livestock_owner_id = ?
+                  WHERE id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception('Database error: Cannot assign caretaker');
+        }
+        
+        $stmt->bind_param('ii', $this->id, $caretaker_id);
+        
+        if ($stmt->execute()) {
+            $stmt->close();
+            return true;
+        }
+        
+        $stmt->close();
+        return false;
+    }
+
+    /**
+     * Remove a pig caretaker from this livestock owner
+     */
+    public function removeCaretaker($caretaker_id) {
+        $query = "UPDATE pig_caretakers 
+                  SET livestock_owner_id = NULL
+                  WHERE id = ? AND livestock_owner_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception('Database error: Cannot remove caretaker');
+        }
+        
+        $stmt->bind_param('ii', $caretaker_id, $this->id);
+        
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                $stmt->close();
+                return true;
+            }
+        }
+        
+        $stmt->close();
+        return false;
+    }
 }

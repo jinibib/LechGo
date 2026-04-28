@@ -37,6 +37,9 @@ foreach ($orders as $order) {
     $orders_by_status[$order['order_status']][] = $order;
 }
 
+
+$currentPage = 'orders';
+
 ?>
 
 <!DOCTYPE html>
@@ -240,8 +243,11 @@ foreach ($orders as $order) {
         }
     </style>
 </head>
-<body class="body-bg">
-    <div class="container mt-lg">
+<body>
+    <div class="dashboard-layout">
+        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        
+        <main class="dashboard-main">
         <div style="max-width: 1000px; margin: 0 auto;">
             <!-- Header -->
             <div style="margin-bottom: var(--spacing-lg);">
@@ -327,7 +333,6 @@ foreach ($orders as $order) {
                         <?php endif; ?>
             </div>
         </div>
-    </div>
 
     <!-- Respond Modal -->
     <div class="respond-modal" id="respondModal">
@@ -392,5 +397,9 @@ foreach ($orders as $order) {
             }
         });
     </script>
+
+    </main>
+
+    </div>
 </body>
 </html>

@@ -173,7 +173,7 @@ class FeedSupplier
                          pc_user.farm_name, pc_user.contact_number,
                          users.name as caretaker_name
                   FROM pig_details pd
-                  JOIN pig_cages pc ON pd.cage_id = pc.id
+                  JOIN pig_pins pc ON pd.cage_id = pc.id
                   JOIN pig_caretakers pc_user ON pc.caretaker_id = pc_user.id
                   JOIN users ON pc_user.user_id = users.id
                   WHERE pd.status = 'active' AND pd.health_status IN ('healthy', 'recovering')
@@ -251,7 +251,7 @@ class FeedSupplier
                          pc_user.farm_name, pc_user.contact_number, pc_user.location,
                          u.name as caretaker_name
                   FROM pig_details pd
-                  JOIN pig_cages pc ON pd.cage_id = pc.id
+                  JOIN pig_pins pc ON pd.cage_id = pc.id
                   JOIN pig_caretakers pc_user ON pc.caretaker_id = pc_user.id
                   JOIN users u ON pc_user.user_id = u.id
                   WHERE pd.status = 'active' AND pd.health_status IN ('healthy', 'recovering')
@@ -315,7 +315,7 @@ class FeedSupplier
         $query = "SELECT pd.*, pc.cage_number, pc_user.farm_name, pc_user.contact_number,
                          u.name as caretaker_name, u.email as caretaker_email
                   FROM pig_details pd
-                  JOIN pig_cages pc ON pd.cage_id = pc.id
+                  JOIN pig_pins pc ON pd.cage_id = pc.id
                   JOIN pig_caretakers pc_user ON pc.caretaker_id = pc_user.id
                   JOIN users u ON pc_user.user_id = u.id
                   WHERE pd.id = ?";

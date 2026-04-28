@@ -67,6 +67,26 @@ class LocationController {
     }
 
     /**
+     * Get all existing farms from livestock_owners table
+     */
+    public function getFarms() {
+        $query = "SELECT DISTINCT farm_name, location FROM livestock_owners ORDER BY farm_name ASC";
+        $result = $this->conn->query($query);
+        
+        $farms = [];
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $farms[] = [
+                    'farm_name' => $row['farm_name'],
+                    'location' => $row['location']
+                ];
+            }
+        }
+        
+        return $farms;
+    }
+
+    /**
      * API endpoint handler - returns JSON response
      */
     public function handleRequest() {
@@ -111,6 +131,13 @@ class LocationController {
                     echo json_encode([
                         'success' => true,
                         'data' => $this->getStreets($municipality, $barangay)
+                    ]);
+                    break;
+
+                case 'farms':
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $this->getFarms()
                     ]);
                     break;
 
