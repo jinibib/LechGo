@@ -24,6 +24,35 @@ if (!$pigCaretaker->findByUserId($user['id'])) {
 $pigCages      = $pigCaretaker->getPigCages();
 $feedInventory = $pigCaretaker->getFeedInventory();
 
+// Build per-cage pig data for feed guide calculation
+// We need each pig's age in days = (age_months * 30) + days since date_added
+$cagePigData = [];
+$stmtPigs = $conn->prepare(
+    "SELECT pd.cage_id,
+            pd.pig_tag_id,
+            pd.age_days,
+            pd.date_added,
+            DATEDIFF(CURDATE(), pd.date_added) AS days_since_added
+     FROM pig_details pd
+     INNER JOIN pig_pins pp ON pd.cage_id = pp.id
+     WHERE pp.caretaker_id = ? AND pd.status = 'active'"
+);
+if ($stmtPigs) {
+    $stmtPigs->bind_param('i', $pigCaretaker->id);
+    $stmtPigs->execute();
+    $pigRows = $stmtPigs->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmtPigs->close();
+    foreach ($pigRows as $pr) {
+        $ageAtAdding  = (int)($pr['age_days'] ?? 0); // already in days
+        $daysSinceAdd = max(0, (int)$pr['days_since_added']);
+        $totalDays    = $ageAtAdding + $daysSinceAdd;
+        $cagePigData[$pr['cage_id']][] = [
+            'tag'  => $pr['pig_tag_id'],
+            'days' => $totalDays,
+        ];
+    }
+}
+
 // Recent feeding records
 $feedingRecords = [];
 $stmt = $conn->prepare(
@@ -300,7 +329,7 @@ $currentPage = 'feeding-schedule';
 
         <!-- Header -->
         <div style="margin-bottom:1.25rem;">
-            <h1 style="font-size:1.5rem; margin:0; color:#333;">📋 Feeding Schedule</h1>
+            <h1 style="font-size:1.5rem; margin:0; color:#333;"> Feeding Schedule</h1>
             <p style="margin:4px 0 0; color:#888; font-size:.88rem;">Record and track daily feeding activities</p>
         </div>
 
@@ -340,8 +369,15 @@ $currentPage = 'feeding-schedule';
                             <select id="cage_id" name="cage_id" required>
                                 <option value="">-- Select pin --</option>
                                 <?php foreach ($pigCages as $cage): ?>
+                                    <?php
+                                        $pigsJson = htmlspecialchars(
+                                            json_encode($cagePigData[$cage['id']] ?? []),
+                                            ENT_QUOTES
+                                        );
+                                    ?>
                                     <option value="<?php echo $cage['id']; ?>"
-                                            data-pigs="<?php echo $cage['current_pig_count']; ?>">
+                                            data-pigs="<?php echo $cage['current_pig_count']; ?>"
+                                            data-pig-info="<?php echo $pigsJson; ?>">
                                         Pin <?php echo htmlspecialchars($cage['cage_number']); ?>
                                         (<?php echo $cage['current_pig_count']; ?>/<?php echo $cage['max_capacity']; ?> pigs)
                                     </option>
@@ -350,7 +386,7 @@ $currentPage = 'feeding-schedule';
                         </div>
                         <div>
                             <label for="amount_kg">Amount (kg) <span id="amount_hint" style="font-weight:400;color:#aaa;font-size:.7rem;"></span></label>
-                            <input type="number" id="amount_kg" name="amount_kg" step="0.5" min="0.5" placeholder="Auto-filled by pin" required readonly
+                            <input type="number" id="amount_kg" name="amount_kg" step="0.001" min="0.001" placeholder="Select a pin first" required readonly
                                    style="background:#f0f0f0; cursor:not-allowed;">
                         </div>
                     </div>
@@ -373,7 +409,7 @@ $currentPage = 'feeding-schedule';
                             <div class="feed-avail" id="feed_avail_hint"></div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-record">✓ Record Feeding</button>
+                    <button type="submit" class="btn btn-primary btn-record"> Record Feeding</button>
                 </form>
             </div>
 
@@ -400,6 +436,32 @@ $currentPage = 'feeding-schedule';
                     <span><span style="display:inline-block;width:12px;height:12px;border:2px solid #c0392b;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>Today</span>
                 </div>
             </div>
+        </div>
+
+        <!-- Feed Guide Reference -->
+        <div class="records-card" style="margin-top:1.25rem;">
+            <h2> Feed Guide Reference</h2>
+            <p style="font-size:.82rem;color:#888;margin:0 0 .75rem;">Based on Average Daily Feed Intake — amount auto-calculated when you select a pin.</p>
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+                    <thead>
+                        <tr>
+                            <th style="background:#fdf0f0;color:#c0392b;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;text-align:left;border-bottom:2px solid #f5c6c6;">Stage</th>
+                            <th style="background:#fdf0f0;color:#c0392b;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;text-align:left;border-bottom:2px solid #f5c6c6;">Age (Days)</th>
+                            <th style="background:#fdf0f0;color:#c0392b;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;text-align:left;border-bottom:2px solid #f5c6c6;">Daily Feed / Pig</th>
+                            <th style="background:#fdf0f0;color:#c0392b;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;text-align:left;border-bottom:2px solid #f5c6c6;">Per Session (÷3)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">Super Biik</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">5 – 35</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">0.10 – 0.25 kg</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;"><strong>0.083 kg</strong> (0.25÷3)</td></tr>
+                        <tr><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">Pre-Starter</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">36 – 50</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">0.25 – 0.50 kg</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;"><strong>0.167 kg</strong> (0.50÷3)</td></tr>
+                        <tr><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">Starter</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">51 – 80</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">0.50 – 1.20 kg</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;"><strong>0.400 kg</strong> (1.20÷3)</td></tr>
+                        <tr><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">Grower</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">81 – 115</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;">1.20 – 2.20 kg</td><td style="padding:9px 12px;border-bottom:1px solid #f5f5f5;"><strong>0.733 kg</strong> (2.20÷3)</td></tr>
+                        <tr><td style="padding:9px 12px;">Grower 2</td><td style="padding:9px 12px;">116 – 140</td><td style="padding:9px 12px;">2.20 – 2.50 kg</td><td style="padding:9px 12px;"><strong>0.833 kg</strong> (2.50÷3)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size:.75rem;color:#aaa;margin:.6rem 0 0;">* Amount auto-filled uses the <strong>maximum</strong> of the daily range ÷ 3 sessions × number of pigs — para dili ma-lugi ang baboy.</p>
         </div>
 
         <!-- Recent Records -->
@@ -485,22 +547,83 @@ document.querySelectorAll('input[name="feeding_session"]').forEach(r => {
     r.addEventListener('change', () => updateSessionTime(r.value));
 });
 
-// Auto-fill amount based on pig count in selected pin (0.5 kg per pig)
-document.getElementById('cage_id').addEventListener('change', function() {
-    const opt = this.options[this.selectedIndex];
-    const pigCount = parseInt(opt.dataset.pigs) || 0;
+// ── Feed Guide (from image) ──────────────────────────────────────────────────
+// Stage → age range in days, daily feed intake range in kg
+const FEED_GUIDE = [
+    { stage: 'Super Biik',  minDay:   5, maxDay:  35, minKg: 0.10, maxKg: 0.25 },
+    { stage: 'Pre-Starter', minDay:  36, maxDay:  50, minKg: 0.25, maxKg: 0.50 },
+    { stage: 'Starter',     minDay:  51, maxDay:  80, minKg: 0.50, maxKg: 1.20 },
+    { stage: 'Grower',      minDay:  81, maxDay: 115, minKg: 1.20, maxKg: 2.20 },
+    { stage: 'Grower 2',    minDay: 116, maxDay: 140, minKg: 2.20, maxKg: 2.50 },
+];
+
+function getFeedForDays(days) {
+    for (const g of FEED_GUIDE) {
+        if (days >= g.minDay && days <= g.maxDay) {
+            // Use max of range so pigs get full recommended amount (dili ma-lugi)
+            return { stage: g.stage, dailyKg: g.maxKg };
+        }
+    }
+    if (days < 5)   return { stage: 'Super Biik',  dailyKg: 0.25 };
+    return           { stage: 'Grower 2',           dailyKg: 2.50 };
+}
+
+// Auto-fill amount based on feed guide + pig age per pin
+function recalcAmount() {
+    const sel = document.getElementById('cage_id');
+    const opt = sel.options[sel.selectedIndex];
     const amountInput = document.getElementById('amount_kg');
     const hint = document.getElementById('amount_hint');
 
-    if (pigCount > 0) {
-        const amount = pigCount * 0.5;
-        amountInput.value = amount;
-        hint.textContent = pigCount + ' pig' + (pigCount > 1 ? 's' : '') + ' × 0.5 kg';
-    } else {
+    if (!opt || !opt.value) {
         amountInput.value = '';
-        hint.textContent = 'No pigs in this pin';
+        hint.textContent = '';
+        return;
     }
-});
+
+    const pigCount = parseInt(opt.dataset.pigs) || 0;
+    if (pigCount === 0) {
+        amountInput.value = '';
+        amountInput.style.background = '#f0f0f0';
+        amountInput.style.borderColor = '#e0e0e0';
+        hint.textContent = 'No pigs in this pin';
+        return;
+    }
+
+    let pigInfo = [];
+    try { pigInfo = JSON.parse(opt.dataset.pigInfo || '[]'); } catch(e) {}
+
+    const SESSIONS_PER_DAY = 3; // morning, noon, afternoon
+    let totalPerSession = 0;
+    let lines = [];
+
+    if (pigInfo.length > 0) {
+        for (const pig of pigInfo) {
+            const rec = getFeedForDays(pig.days);
+            const perSession = rec.dailyKg / SESSIONS_PER_DAY;
+            totalPerSession += perSession;
+            lines.push(pig.tag + ' → ' + rec.stage + ' (day ' + pig.days + '): '
+                + rec.dailyKg.toFixed(2) + ' kg/day ÷ 3 = '
+                + perSession.toFixed(3) + ' kg/session');
+        }
+    } else {
+        // Fallback when no age data stored
+        totalPerSession = pigCount * (0.5 / SESSIONS_PER_DAY);
+        lines.push(pigCount + ' pig(s) — no age data, using 0.5 kg/day default');
+    }
+
+    const rounded = Math.round(totalPerSession * 1000) / 1000;
+    amountInput.value = rounded;
+    amountInput.style.background = '#f0fff0';
+    amountInput.style.borderColor = '#2d7a2d';
+
+    const tipText = lines.join('\n') + '\n\nTotal per session: ' + rounded + ' kg';
+    hint.innerHTML = '<span title="' + tipText.replace(/"/g, '&quot;') + '" style="cursor:help;text-decoration:underline dotted;color:#2d7a2d;">'
+        + pigCount + ' pig' + (pigCount > 1 ? 's' : '') + ' · '
+        + rounded + ' kg/session </span>';
+}
+
+document.getElementById('cage_id').addEventListener('change', recalcAmount);
 
 // Calendar
 let calYear, calMonth;

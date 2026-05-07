@@ -276,8 +276,11 @@ $totalPigs = $pigCaretaker->getTotalPigCount();
                                 <input type="text" name="pig_tag_id" value="${autoTagId}" readonly style="background:#f5f5f5;">
                             </div>
                             <div>
-                                <label>Age (months)</label>
-                                <input type="number" name="age_months" placeholder="e.g., 3" min="0">
+                                <label>Age (days) <span style="font-weight:400;color:#aaa;font-size:.68rem;">e.g. 60 = Starter stage</span></label>
+                                <input type="number" name="age_days" placeholder="e.g., 60" min="0" max="500">
+                                <div style="font-size:.68rem;color:#aaa;margin-top:3px;">
+                                    Super Biik: 5–35 · Pre-Starter: 36–50 · Starter: 51–80 · Grower: 81–115 · Grower 2: 116–140
+                                </div>
                             </div>
                             <div>
                                 <label>Weight (kg)</label>

@@ -347,51 +347,6 @@ $statusColors = [
         <?php endif; ?>
 
     </div>
-    <!-- ===== ALL PIGS - POST TO MARKET SECTION ===== -->
-    <?php if (!empty($allPigs)): ?>
-    <div class="apm-section">
-        <div class="apm-section-title">
-            🐷 Your Pigs <span>— click a pig to post it to your market</span>
-        </div>
-        <div class="apm-grid">
-            <?php foreach ($allPigs as $pig): ?>
-            <div class="apm-card">
-                <?php if (!empty($pig['photo_url'])): ?>
-                    <img src="<?php echo htmlspecialchars($pig['photo_url']); ?>" class="apm-card-photo" alt="Pig">
-                <?php else: ?>
-                    <div class="apm-card-placeholder">🐷</div>
-                <?php endif; ?>
-                <div class="apm-card-body">
-                    <div class="apm-card-tag"><?php echo htmlspecialchars($pig['pig_tag_id'] ?? 'No Tag'); ?></div>
-                    <div class="apm-card-row">Pin: <span><?php echo htmlspecialchars($pig['pin_number']); ?></span></div>
-                    <div class="apm-card-row">Weight: <span><?php echo $pig['weight_kg'] ? number_format($pig['weight_kg'],1).' kg' : '—'; ?></span></div>
-                    <?php if ($pig['age_months']): ?>
-                    <div class="apm-card-row">Age: <span><?php echo $pig['age_months']; ?> mos</span></div>
-                    <?php endif; ?>
-                    <span class="apm-health <?php echo $pig['health_status']; ?>"><?php echo ucfirst($pig['health_status']); ?></span>
-                    <div class="apm-card-caretaker">👤 <?php echo htmlspecialchars($pig['caretaker_name']); ?></div>
-                </div>
-                <div class="apm-card-footer">
-                    <?php if ($pig['already_listed']): ?>
-                        <button class="apm-btn-market listed" disabled>✓ Already Listed</button>
-                    <?php else: ?>
-                        <button class="apm-btn-market" onclick="openPostModal(
-                            <?php echo (int)$pig['pig_id']; ?>,
-                            '<?php echo htmlspecialchars(addslashes($pig['pig_tag_id'] ?? 'No Tag')); ?>',
-                            '<?php echo htmlspecialchars(addslashes($pig['pin_number'])); ?>',
-                            <?php echo (float)($pig['weight_kg'] ?? 0); ?>
-                        )">🛒 Post to My Market</button>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    </div>
-    </main>
-</div>
 <script>
 function toggleReport(header) {
     const body = header.nextElementSibling;

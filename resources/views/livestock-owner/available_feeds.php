@@ -18,7 +18,8 @@ if (!$stmt) {
     $stmt->close();
     
     // Get available products from all suppliers
-    $query = "SELECT fp.id, fp.product_name, fp.feed_type, fp.description, fp.unit_price, 
+    $query = "SELECT fp.id, fp.product_name, fp.feed_type, fp.description, fp.unit_price,
+                     fp.previous_price, fp.price_updated_at,
                      fp.quantity_available_kg, fp.image_url, s.id as supplier_id, s.farm_name as supplier_name
               FROM feed_products fp
               JOIN suppliers s ON fp.supplier_id = s.id
@@ -182,7 +183,37 @@ if (!$stmt) {
                         <div class="feed-stats">
                             <div class="stat">
                                 <div class="stat-label">Price</div>
-                                <div class="stat-value">₱<?php echo number_format($feed['unit_price'], 2); ?>/kg</div>
+                                <div class="stat-value">
+                                    <?php
+                                    $hasOldPrice = !empty($feed['previous_price']) && $feed['previous_price'] != $feed['unit_price'];
+                                    // Only show badge if price was updated within 30 days
+                                    $isRecent = $hasOldPrice && !empty($feed['price_updated_at'])
+                                        && (time() - strtotime($feed['price_updated_at'])) < (30 * 86400);
+                                    $priceWentUp = $hasOldPrice && $feed['unit_price'] > $feed['previous_price'];
+                                    ?>
+                                    <?php if ($isRecent): ?>
+                                        <div style="display:flex;flex-direction:column;gap:2px;">
+                                            <span style="font-size:.75rem;color:#999;text-decoration:line-through;">
+                                                ₱<?php echo number_format($feed['previous_price'], 2); ?>/kg
+                                            </span>
+                                            <span style="display:inline-flex;align-items:center;gap:5px;">
+                                                <strong style="color:<?php echo $priceWentUp ? '#c0392b' : '#27ae60'; ?>;font-size:1rem;">
+                                                    ₱<?php echo number_format($feed['unit_price'], 2); ?>/kg
+                                                </strong>
+                                                <span style="font-size:.68rem;font-weight:700;padding:2px 6px;border-radius:10px;
+                                                    background:<?php echo $priceWentUp ? '#fde8e8' : '#e8f8ee'; ?>;
+                                                    color:<?php echo $priceWentUp ? '#c0392b' : '#27ae60'; ?>;">
+                                                    <?php echo $priceWentUp ? '▲ Price Up' : '▼ Price Down'; ?>
+                                                </span>
+                                            </span>
+                                            <span style="font-size:.65rem;color:#aaa;">
+                                                Updated <?php echo date('M d', strtotime($feed['price_updated_at'])); ?>
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        ₱<?php echo number_format($feed['unit_price'], 2); ?>/kg
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             <div class="stat">
                                 <div class="stat-label">Available</div>

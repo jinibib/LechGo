@@ -60,6 +60,32 @@ if (empty($route)) {
     $route = 'landing';
 }
 
+// ── Transaction Log Helper ───────────────────────────────────────────────────
+function insertTransactionLog($conn, $order_id, $order_number, $livestock_owner_id, $supplier_id,
+                               $supplier_name, $buyer_name, $feed_type, $product_name,
+                               $quantity_kg, $unit_price, $subtotal, $purchase_date,
+                               $payment_status = 'pending', $order_status = 'pending') {
+    $stmt = $conn->prepare(
+        "INSERT IGNORE INTO transaction_logs
+         (order_id, order_number, livestock_owner_id, supplier_id, supplier_name, buyer_name,
+          feed_type, product_name, quantity_kg, unit_price, subtotal, purchase_date, payment_status, order_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    if (!$stmt) return;
+    // Types: i=order_id, s=order_number, i=livestock_owner_id, i=supplier_id,
+    //        s=supplier_name, s=buyer_name, s=feed_type, s=product_name,
+    //        d=quantity_kg, d=unit_price, d=subtotal,
+    //        s=purchase_date, s=payment_status, s=order_status  (14 total)
+    $stmt->bind_param('isiissssdddsss',
+        $order_id, $order_number, $livestock_owner_id, $supplier_id,
+        $supplier_name, $buyer_name, $feed_type, $product_name,
+        $quantity_kg, $unit_price, $subtotal, $purchase_date,
+        $payment_status, $order_status
+    );
+    $stmt->execute();
+    $stmt->close();
+}
+
 // Handle API routes BEFORE RBAC check
 if ($route === 'notifications') {
     require_once APP_PATH . '/controllers/NotificationController.php';
@@ -727,6 +753,25 @@ switch ($route) {
                                 $deduct_stmt->execute();
                                 $deduct_stmt->close();
                             }
+
+        // Log transaction
+                            $sup_name_q = $conn->prepare("SELECT COALESCE(s.farm_name, u.name) as biz_name FROM suppliers s JOIN users u ON s.user_id = u.id WHERE s.id = ?");
+                            $sup_name = 'Unknown Supplier';
+                            if ($sup_name_q) {
+                                $sup_name_q->bind_param('i', $supplier_id);
+                                $sup_name_q->execute();
+                                $sup_row = $sup_name_q->get_result()->fetch_assoc();
+                                $sup_name_q->close();
+                                if ($sup_row) $sup_name = $sup_row['biz_name'];
+                            }
+                            insertTransactionLog(
+                                $conn, $order_id, $order_number,
+                                $owner['id'], $supplier_id,
+                                $sup_name, $owner['name'],
+                                $item['feed_type'], $item['product_name'],
+                                $item['quantity_kg'], $item['unit_price'], $item['subtotal'],
+                                date('Y-m-d H:i:s'), 'paid', 'pending'
+                            );
                         }
                     }
 
@@ -812,6 +857,25 @@ switch ($route) {
                             $deduct_stmt->execute();
                             $deduct_stmt->close();
                         }
+
+                        // Log transaction (COD / bank transfer)
+                        $sup_name_q2 = $conn->prepare("SELECT COALESCE(s.farm_name, u.name) as biz_name FROM suppliers s JOIN users u ON s.user_id = u.id WHERE s.id = ?");
+                        $sup_name2 = 'Unknown Supplier';
+                        if ($sup_name_q2) {
+                            $sup_name_q2->bind_param('i', $supplier_id);
+                            $sup_name_q2->execute();
+                            $sup_row2 = $sup_name_q2->get_result()->fetch_assoc();
+                            $sup_name_q2->close();
+                            if ($sup_row2) $sup_name2 = $sup_row2['biz_name'];
+                        }
+                        insertTransactionLog(
+                            $conn, $order_id, $order_number,
+                            $owner['id'], $supplier_id,
+                            $sup_name2, $owner['name'],
+                            $item['feed_type'], $item['product_name'],
+                            $item['quantity_kg'], $item['unit_price'], $item['subtotal'],
+                            date('Y-m-d H:i:s'), 'unpaid', 'pending'
+                        );
                     }
 
                     // Send notification to supplier
@@ -949,6 +1013,12 @@ switch ($route) {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             // RBAC check already done above
             require VIEWS_PATH . '/livestock-owner/my-orders.php';
+        }
+        break;
+
+    case 'livestock-owner/transaction-logs':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            require VIEWS_PATH . '/livestock-owner/transaction-logs.php';
         }
         break;
 
@@ -1248,7 +1318,8 @@ switch ($route) {
                 $cage_id = $_POST['cage_id'] ?? null;
                 $pig_tag_id = !empty($_POST['pig_tag_id']) ? $_POST['pig_tag_id'] : null;
                 $breed = $_POST['breed'] ?? 'Unknown';
-                $age_months = !empty($_POST['age_months']) ? (int)$_POST['age_months'] : 0;
+                $age_days = !empty($_POST['age_days']) ? (int)$_POST['age_days'] : 0;
+                $age_months = (int)round($age_days / 30); // keep age_months in sync for legacy display
                 $weight_kg = !empty($_POST['weight_kg']) ? (float)$_POST['weight_kg'] : 0.00;
                 $health_status = $_POST['health_status'] ?? 'healthy';
                 $date_added = $_POST['date_added'] ?? date('Y-m-d');
@@ -1326,14 +1397,14 @@ switch ($route) {
                 }
 
                 // Insert pig
-                $query = "INSERT INTO pig_details (cage_id, pig_tag_id, age_months, weight_kg, health_status, date_added, status, photo_url, aic_file, brgy_cert_file)
-                          VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)";
+                $query = "INSERT INTO pig_details (cage_id, pig_tag_id, age_months, age_days, weight_kg, health_status, date_added, status, photo_url, aic_file, brgy_cert_file)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)";
                 $stmt = $conn->prepare($query);
                 if (!$stmt) {
                     throw new Exception('Database error: ' . $conn->error);
                 }
                 
-                $stmt->bind_param('isidsssss', $cage_id, $pig_tag_id, $age_months, $weight_kg, $health_status, $date_added, $pig_photo, $aic_file, $brgy_cert_file);
+                $stmt->bind_param('isiidsssss', $cage_id, $pig_tag_id, $age_months, $age_days, $weight_kg, $health_status, $date_added, $pig_photo, $aic_file, $brgy_cert_file);
                 if (!$stmt->execute()) {
                     throw new Exception('Error adding pig: ' . $stmt->error);
                 }
@@ -1359,6 +1430,128 @@ switch ($route) {
                 header('Location: ' . $base_url . '/pig-caretaker/pigs');
                 exit;
             }
+        }
+        break;
+
+    // Pig Caretaker - Edit Pig
+    case 'pig-caretaker/edit-pig':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $user     = $sessionMiddleware->getUser();
+                $pig_id   = (int)($_POST['pig_id'] ?? 0);
+                $age_days = (int)($_POST['age_days'] ?? 0);
+                $age_months = (int)round($age_days / 30);
+                $weight_kg     = !empty($_POST['weight_kg'])     ? (float)$_POST['weight_kg']     : 0;
+                $health_status = $_POST['health_status'] ?? 'healthy';
+                $date_added    = $_POST['date_added']    ?? date('Y-m-d');
+
+                if (!$pig_id) throw new Exception('Pig not found');
+
+                // Verify pig belongs to this caretaker
+                $stmt = $conn->prepare(
+                    "SELECT pd.id, pd.photo_url FROM pig_details pd
+                     INNER JOIN pig_pins pp ON pd.cage_id = pp.id
+                     INNER JOIN pig_caretakers pc ON pp.caretaker_id = pc.id
+                     WHERE pd.id = ? AND pc.user_id = ? AND pd.status = 'active'"
+                );
+                if (!$stmt) throw new Exception('DB error: ' . $conn->error);
+                $stmt->bind_param('ii', $pig_id, $user['id']);
+                $stmt->execute();
+                $existing = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if (!$existing) throw new Exception('Pig not found or access denied');
+
+                // Handle new photo upload
+                $photo_url = $existing['photo_url']; // keep existing by default
+                if (!empty($_FILES['pig_photo']['tmp_name'])) {
+                    $upload_dir = BASE_PATH . '/public/uploads/pigs/';
+                    if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+                    $ext = strtolower(pathinfo($_FILES['pig_photo']['name'], PATHINFO_EXTENSION));
+                    $allowed = ['jpg','jpeg','png','gif','webp'];
+                    if (!in_array($ext, $allowed)) throw new Exception('Invalid image type');
+                    $filename = 'pig_' . time() . '_' . rand(100,999) . '.' . $ext;
+                    if (move_uploaded_file($_FILES['pig_photo']['tmp_name'], $upload_dir . $filename)) {
+                        // Delete old photo file if exists
+                        if ($existing['photo_url']) {
+                            $old = BASE_PATH . str_replace('/LechGo_Final', '', $existing['photo_url']);
+                            if (file_exists($old)) @unlink($old);
+                        }
+                        $photo_url = '/LechGo_Final/public/uploads/pigs/' . $filename;
+                    }
+                }
+
+                // Update
+                $stmt = $conn->prepare(
+                    "UPDATE pig_details
+                     SET age_days = ?, age_months = ?, weight_kg = ?, health_status = ?, date_added = ?, photo_url = ?
+                     WHERE id = ?"
+                );
+                if (!$stmt) throw new Exception('DB error: ' . $conn->error);
+                $stmt->bind_param('iidsssi', $age_days, $age_months, $weight_kg, $health_status, $date_added, $photo_url, $pig_id);
+                if (!$stmt->execute()) throw new Exception('Update failed: ' . $stmt->error);
+                $stmt->close();
+
+                $_SESSION['success'] = 'Pig updated successfully!';
+            } catch (Exception $e) {
+                $_SESSION['error'] = 'Error: ' . $e->getMessage();
+            }
+            header('Location: ' . $base_url . '/pig-caretaker/view-pigs');
+            exit;
+        }
+        break;
+
+    // Pig Caretaker - Delete Pig
+    case 'pig-caretaker/delete-pig':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $user   = $sessionMiddleware->getUser();
+                $pig_id = (int)($_POST['pig_id'] ?? 0);
+
+                if (!$pig_id) throw new Exception('Pig not found');
+
+                // Verify pig belongs to this caretaker and get cage_id
+                $stmt = $conn->prepare(
+                    "SELECT pd.id, pd.cage_id, pd.photo_url, pd.aic_file, pd.brgy_cert_file
+                     FROM pig_details pd
+                     INNER JOIN pig_pins pp ON pd.cage_id = pp.id
+                     INNER JOIN pig_caretakers pc ON pp.caretaker_id = pc.id
+                     WHERE pd.id = ? AND pc.user_id = ? AND pd.status = 'active'"
+                );
+                if (!$stmt) throw new Exception('DB error: ' . $conn->error);
+                $stmt->bind_param('ii', $pig_id, $user['id']);
+                $stmt->execute();
+                $pig = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+
+                if (!$pig) throw new Exception('Pig not found or access denied');
+
+                $cage_id = $pig['cage_id'];
+
+                // Soft-delete: mark pig as removed
+                $stmt = $conn->prepare("UPDATE pig_details SET status = 'removed' WHERE id = ?");
+                if (!$stmt) throw new Exception('DB error: ' . $conn->error);
+                $stmt->bind_param('i', $pig_id);
+                if (!$stmt->execute()) throw new Exception('Delete failed: ' . $stmt->error);
+                $stmt->close();
+
+                // Decrement pin count and set inactive if now empty
+                $stmt = $conn->prepare(
+                    "UPDATE pig_pins
+                     SET current_pig_count = GREATEST(current_pig_count - 1, 0),
+                         status = CASE WHEN (current_pig_count - 1) <= 0 THEN 'inactive' ELSE 'active' END
+                     WHERE id = ?"
+                );
+                if (!$stmt) throw new Exception('DB error: ' . $conn->error);
+                $stmt->bind_param('i', $cage_id);
+                $stmt->execute();
+                $stmt->close();
+
+                $_SESSION['success'] = 'Pig removed successfully.';
+            } catch (Exception $e) {
+                $_SESSION['error'] = 'Error: ' . $e->getMessage();
+            }
+            header('Location: ' . $base_url . '/pig-caretaker/view-pigs');
+            exit;
         }
         break;
 
@@ -1450,6 +1643,12 @@ switch ($route) {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             // RBAC check already done above
             require VIEWS_PATH . '/supplier/product-inventory.php';
+        }
+        break;
+
+    case 'supplier/transaction-logs':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            require VIEWS_PATH . '/supplier/transaction-logs.php';
         }
         break;
 
@@ -1713,7 +1912,7 @@ switch ($route) {
                 }
 
                 // Verify product belongs to this supplier
-                $query = "SELECT image_url FROM feed_products WHERE id = ? AND supplier_id = ?";
+                $query = "SELECT image_url, unit_price FROM feed_products WHERE id = ? AND supplier_id = ?";
                 $stmt = $conn->prepare($query);
                 if (!$stmt) {
                     throw new Exception('Database error: ' . $conn->error);
@@ -1729,6 +1928,9 @@ switch ($route) {
                 }
 
                 $image_url = $existing_product['image_url'];
+                // Track price change
+                $old_price = (float)$existing_product['unit_price'];
+                $price_changed = abs($old_price - $unit_price) > 0.001;
 
                 // Handle image upload
                 if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
@@ -1773,13 +1975,18 @@ switch ($route) {
                     $image_url = '/LechGo_Final/public/uploads/products/' . $unique_name;
                 }
 
-                // Update product
-                $query = "UPDATE feed_products SET product_name = ?, feed_type = ?, description = ?, unit_price = ?, quantity_available_kg = ?, image_url = ? WHERE id = ? AND supplier_id = ?";
-                $stmt = $conn->prepare($query);
-                if (!$stmt) {
-                    throw new Exception('Database error: ' . $conn->error);
+                // Update product — save previous price if it changed
+                if ($price_changed) {
+                    $query = "UPDATE feed_products SET product_name = ?, feed_type = ?, description = ?, unit_price = ?, quantity_available_kg = ?, image_url = ?, previous_price = ?, price_updated_at = NOW() WHERE id = ? AND supplier_id = ?";
+                    $stmt = $conn->prepare($query);
+                    if (!$stmt) throw new Exception('Database error: ' . $conn->error);
+                    $stmt->bind_param('sssddsdii', $product_name, $feed_type, $description, $unit_price, $quantity_available_kg, $image_url, $old_price, $product_id, $supplier['id']);
+                } else {
+                    $query = "UPDATE feed_products SET product_name = ?, feed_type = ?, description = ?, unit_price = ?, quantity_available_kg = ?, image_url = ? WHERE id = ? AND supplier_id = ?";
+                    $stmt = $conn->prepare($query);
+                    if (!$stmt) throw new Exception('Database error: ' . $conn->error);
+                    $stmt->bind_param('sssddsii', $product_name, $feed_type, $description, $unit_price, $quantity_available_kg, $image_url, $product_id, $supplier['id']);
                 }
-                $stmt->bind_param('sssddsii', $product_name, $feed_type, $description, $unit_price, $quantity_available_kg, $image_url, $product_id, $supplier['id']);
                 if (!$stmt->execute()) {
                     throw new Exception('Error updating product: ' . $stmt->error);
                 }
@@ -3515,14 +3722,19 @@ switch ($route) {
 
                     // Notify the customer who reserved it
                     if ($listing['reserved_by_user_id']) {
+                        $seller_feedback = trim($_POST['seller_feedback'] ?? '');
+                        $notif_message = 'Great news! The livestock owner has confirmed your reservation for ' .
+                            $listing['pig_tag_id'] . ' (₱' . number_format($listing['total_price'], 2) .
+                            '). Please coordinate with the seller for pickup/delivery.';
+                        if ($seller_feedback !== '') {
+                            $notif_message .= ' Message from seller: "' . $seller_feedback . '"';
+                        }
                         $notification = new Notification($conn);
                         $notification->create(
                             $listing['reserved_by_user_id'],
                             'pig_sold',
                             ' Your Pig Order is Confirmed!',
-                            'Great news! The livestock owner has confirmed your reservation for ' .
-                                $listing['pig_tag_id'] . ' (₱' . number_format($listing['total_price'], 2) .
-                                '). Please coordinate with the seller for pickup/delivery.',
+                            $notif_message,
                             '/LechGo_Final/public/customer/buy-pig'
                         );
                     }

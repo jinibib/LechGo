@@ -171,12 +171,18 @@ if ($stmt) {
                         <form method="POST" action="/LechGo_Final/public/livestock-owner/update-pig-listing" style="flex:1;display:flex;gap:6px;">
                             <input type="hidden" name="listing_id" value="<?php echo $l['id']; ?>">
                             <?php if ($l['status'] === 'reserved'): ?>
-                                <button type="submit" name="action" value="sold" class="mpm-btn-sold" style="flex:2;"> Mark Sold</button>
+                                <button type="button" class="mpm-btn-sold" style="flex:2;"
+                                    onclick="openSoldModal(<?php echo $l['id']; ?>, '<?php echo htmlspecialchars(addslashes($l['pig_tag_id'])); ?>', '<?php echo htmlspecialchars(addslashes($l['reserved_by_name'] ?? '')); ?>')">
+                                     Response
+                                </button>
                                 <button type="submit" name="action" value="active"
                                     class="mpm-btn-remove"
                                     onclick="return confirm('Cancel this reservation?')">↩ Cancel</button>
                             <?php else: ?>
-                                <button type="submit" name="action" value="sold" class="mpm-btn-sold">Mark Sold</button>
+                                <button type="button" class="mpm-btn-sold"
+                                    onclick="openSoldModal(<?php echo $l['id']; ?>, '<?php echo htmlspecialchars(addslashes($l['pig_tag_id'])); ?>', '')">
+                                    Response
+                                </button>
                                 <button type="submit" name="action" value="removed" class="mpm-btn-remove">Remove</button>
                             <?php endif; ?>
                         </form>
@@ -190,7 +196,70 @@ if ($stmt) {
     </div>
     </main>
 </div>
+<!-- Mark Sold Modal -->
+<div class="bpm-overlay" id="soldModalOverlay" onclick="if(event.target===this)closeSoldModal()">
+    <div class="bpm-modal">
+        <div class="bpm-header" style="background:#2d7a2d;">
+            <h3> Post reservation</h3>
+            <button class="bpm-close" onclick="closeSoldModal()">✕</button>
+        </div>
+        <div class="bpm-body">
+            <div class="bpm-pig-summary" style="background:#f0faf0;border-left:3px solid #2d7a2d;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:14px;">
+                <strong id="sm_tag" style="color:#2d7a2d;display:block;font-size:1rem;margin-bottom:3px;"></strong>
+                <span id="sm_buyer" style="font-size:.8rem;color:#666;"></span>
+            </div>
+            <form method="POST" action="/LechGo_Final/public/livestock-owner/update-pig-listing">
+                <input type="hidden" name="listing_id" id="sm_listing_id">
+                <input type="hidden" name="action" value="sold">
+                <div class="bpm-field">
+                    <label style="display:block;font-size:.78rem;font-weight:700;color:#444;margin-bottom:4px;">
+                        Message to Customer <span style="color:#aaa;font-weight:400;">(optional)</span>
+                    </label>
+                    <textarea name="seller_feedback" id="sm_feedback"
+                        placeholder="e.g. Thank you! Please pick up the pig at our farm on Saturday morning. Contact us at 09XX-XXX-XXXX."
+                        style="width:100%;padding:8px 10px;border:1.5px solid #e0e0e0;border-radius:7px;font-size:.85rem;box-sizing:border-box;resize:vertical;min-height:90px;outline:none;"
+                        onfocus="this.style.borderColor='#2d7a2d'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" onclick="closeSoldModal()"
+                        style="flex:1;background:#f0f0f0;color:#555;border:none;border-radius:7px;padding:10px;font-size:.88rem;font-weight:700;cursor:pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        style="flex:1;background:#2d7a2d;color:#fff;border:none;border-radius:7px;padding:10px;font-size:.88rem;font-weight:700;cursor:pointer;">
+                         Send
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.bpm-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; align-items:center; justify-content:center; }
+.bpm-overlay.open { display:flex; }
+.bpm-modal { background:#fff; border-radius:14px; width:92%; max-width:440px; box-shadow:0 8px 32px rgba(0,0,0,.18); overflow:hidden; }
+.bpm-header { color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.bpm-header h3 { margin:0; font-size:1rem; }
+.bpm-close { background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer; }
+.bpm-body { padding:18px; }
+.bpm-field { margin-bottom:14px; }
+</style>
+
 <script>
+function openSoldModal(listingId, tag, buyerName) {
+    document.getElementById('sm_listing_id').value = listingId;
+    document.getElementById('sm_tag').textContent  = ' ' + tag;
+    document.getElementById('sm_buyer').textContent = buyerName
+        ? 'Reserved by: ' + buyerName
+        : 'No reservation — marking as sold directly.';
+    document.getElementById('sm_feedback').value = '';
+    document.getElementById('soldModalOverlay').classList.add('open');
+}
+function closeSoldModal() {
+    document.getElementById('soldModalOverlay').classList.remove('open');
+}
+
 function filterListings(status, btn) {
     document.querySelectorAll('.mpm-tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
