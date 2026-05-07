@@ -113,11 +113,19 @@ class PigCaretaker
     }
 
     /**
-     * Get all pig cages for this caretaker
+     * Get all pig cages for this caretaker.
+     * current_pig_count is computed live from pig_details so it is always
+     * accurate even if the stored counter drifted (e.g. direct DB deletes).
      */
     public function getPigCages()
     {
-        $query = "SELECT * FROM pig_pins WHERE caretaker_id = ? ORDER BY cage_number ASC";
+        $query = "SELECT pp.*,
+                         COUNT(pd.id) AS current_pig_count
+                  FROM pig_pins pp
+                  LEFT JOIN pig_details pd ON pd.cage_id = pp.id AND pd.status = 'active'
+                  WHERE pp.caretaker_id = ?
+                  GROUP BY pp.id
+                  ORDER BY pp.cage_number + 0 ASC";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {
@@ -130,6 +138,12 @@ class PigCaretaker
 
         $cages = [];
         while ($row = $result->fetch_assoc()) {
+            // Keep the stored counter in sync while we're here
+            $this->conn->query(
+                "UPDATE pig_pins SET current_pig_count = " . (int)$row['current_pig_count'] .
+                ", status = '" . ($row['current_pig_count'] > 0 ? 'active' : 'inactive') . "'" .
+                " WHERE id = " . (int)$row['id']
+            );
             $cages[] = $row;
         }
 
@@ -299,11 +313,14 @@ class PigCaretaker
     }
 
     /**
-     * Get total pig count
+     * Get total pig count (live from pig_details, not the stored counter)
      */
     public function getTotalPigCount()
     {
-        $query = "SELECT SUM(current_pig_count) as total FROM pig_pins WHERE caretaker_id = ?";
+        $query = "SELECT COUNT(pd.id) as total
+                  FROM pig_details pd
+                  INNER JOIN pig_pins pp ON pd.cage_id = pp.id
+                  WHERE pp.caretaker_id = ? AND pd.status = 'active'";
         $stmt = $this->conn->prepare($query);
 
         if (!$stmt) {

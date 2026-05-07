@@ -31,7 +31,8 @@ if (!$supplier) {
 $supplier_id = $supplier['id'];
 
 // Get supplier's products
-$query = "SELECT id, product_name, feed_type, description, unit_price, quantity_available_kg, image_url, is_active, created_at
+$query = "SELECT id, product_name, feed_type, description, unit_price, previous_price, price_updated_at,
+                 quantity_available_kg, image_url, is_active, created_at
           FROM feed_products
           WHERE supplier_id = ?
           ORDER BY created_at DESC";
@@ -283,11 +284,35 @@ if ($stmt) {
                                         </td>
                                         <td><strong><?php echo htmlspecialchars($product['product_name']); ?></strong></td>
                                         <td><?php echo htmlspecialchars($product['feed_type']); ?></td>
-                                        <td>₱<?php echo number_format($product['unit_price'], 2); ?></td>
+                                        <td>
+                                            <?php
+                                            $hasOld = !empty($product['previous_price']) && $product['previous_price'] != $product['unit_price'];
+                                            $isRecent = $hasOld && !empty($product['price_updated_at'])
+                                                && (time() - strtotime($product['price_updated_at'])) < (30 * 86400);
+                                            $wentUp = $hasOld && $product['unit_price'] > $product['previous_price'];
+                                            ?>
+                                            <?php if ($isRecent): ?>
+                                                <div style="line-height:1.5;">
+                                                    <span style="font-size:.75rem;color:#aaa;text-decoration:line-through;">
+                                                        ₱<?php echo number_format($product['previous_price'], 2); ?>
+                                                    </span><br>
+                                                    <strong style="color:<?php echo $wentUp ? '#c0392b' : '#27ae60'; ?>;">
+                                                        ₱<?php echo number_format($product['unit_price'], 2); ?>
+                                                    </strong>
+                                                    <span style="font-size:.65rem;font-weight:700;padding:1px 5px;border-radius:8px;
+                                                        background:<?php echo $wentUp ? '#fde8e8' : '#e8f8ee'; ?>;
+                                                        color:<?php echo $wentUp ? '#c0392b' : '#27ae60'; ?>;">
+                                                        <?php echo $wentUp ? '▲' : '▼'; ?>
+                                                    </span>
+                                                </div>
+                                            <?php else: ?>
+                                                ₱<?php echo number_format($product['unit_price'], 2); ?>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?php echo number_format($product['quantity_available_kg'], 1); ?></td>
                                         <td>
                                             <span class="<?php echo $product['is_active'] ? 'status-active' : 'status-inactive'; ?>">
-                                                <?php echo $product['is_active'] ? '✓ Active' : '✗ Inactive'; ?>
+                                                <?php echo $product['is_active'] ? ' Active' : ' Inactive'; ?>
                                             </span>
                                         </td>
                                         <td><?php echo date('M d, Y', strtotime($product['created_at'])); ?></td>

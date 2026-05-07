@@ -124,74 +124,137 @@ $all_types = $all_types_result ? $all_types_result->fetch_all(MYSQLI_ASSOC) : []
             text-decoration: none;
         }
 
-        .distributor-section { margin-bottom: 36px; }
+        .distributor-section { margin-bottom: 28px; }
         .distributor-header {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             background: white;
             border: 1px solid #e8e8e8;
             border-radius: 10px 10px 0 0;
-            padding: 14px 18px;
+            padding: 12px 16px;
             border-bottom: 2px solid var(--primary-red, #e74c3c);
         }
         .distributor-avatar {
-            width: 42px; height: 42px;
+            width: 38px; height: 38px;
             background: var(--primary-red, #e74c3c);
             color: white;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: 700; flex-shrink: 0;
+            font-size: 16px; font-weight: 800; flex-shrink: 0;
         }
-        .distributor-name { font-weight: 700; font-size: 15px; color: #2c3e50; }
-        .distributor-meta { font-size: 12px; color: #888; margin-top: 2px; }
+        .distributor-name { font-weight: 700; font-size: 14px; color: #2c3e50; }
+        .distributor-meta { font-size: 11px; color: #999; margin-top: 2px; }
 
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 0;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            background: #f8f8f8;
             border: 1px solid #e8e8e8;
             border-top: none;
-            border-radius: 0 0 10px 10px;
-            overflow: hidden;
+            border-radius: 0 0 12px 12px;
         }
         .product-card {
             background: white;
-            border-right: 1px solid #f0f0f0;
-            border-bottom: 1px solid #f0f0f0;
-            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #efefef;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            transition: background .2s;
+            overflow: hidden;
+            box-shadow: 0 1px 5px rgba(0,0,0,.05);
+            transition: box-shadow .2s, transform .15s;
         }
-        .product-card:hover { background: #fafafa; }
+        .product-card:hover {
+            box-shadow: 0 4px 14px rgba(0,0,0,.09);
+            transform: translateY(-2px);
+        }
         .product-img {
             width: 100%; height: 120px;
-            object-fit: cover; border-radius: 6px;
+            object-fit: cover;
         }
         .product-img-placeholder {
             width: 100%; height: 120px;
-            background: #f5f5f5; border-radius: 6px;
+            background: linear-gradient(135deg, #f5f5f5, #ebebeb);
             display: flex; align-items: center; justify-content: center;
             font-size: 36px; color: #ccc;
         }
-        .product-name { font-weight: 700; font-size: 14px; color: #2c3e50; }
+        .product-body {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+        .product-name { font-weight: 700; font-size: 13px; color: #2c3e50; line-height: 1.3; }
         .product-type {
             display: inline-block;
             background: #fff3e0; color: #e67e22;
-            font-size: 11px; font-weight: 600;
-            padding: 2px 8px; border-radius: 12px;
+            font-size: 10px; font-weight: 700;
+            padding: 2px 8px; border-radius: 20px;
+            width: fit-content;
         }
-        .product-desc { font-size: 12px; color: #888; line-height: 1.4; }
+        .product-desc { font-size: 11px; color: #999; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .product-stats {
-            display: flex; gap: 10px;
-            margin-top: auto;
+            display: flex; gap: 0;
+            background: #f9f9f9;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #f0f0f0;
         }
-        .product-stat { flex: 1; }
-        .product-stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .product-stat-value { font-size: 14px; font-weight: 700; color: #2c3e50; }
+        .product-stat {
+            flex: 1;
+            padding: 5px 8px;
+            text-align: center;
+        }
+        .product-stat + .product-stat { border-left: 1px solid #f0f0f0; }
+        .product-stat-label { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: .03em; }
+        .product-stat-value { font-size: 13px; font-weight: 700; color: #2c3e50; margin-top: 1px; }
         .product-price { color: #27ae60 !important; }
+
+        .product-order-form {
+            padding: 8px 12px 12px;
+            border-top: 1px solid #f5f5f5;
+            background: #fafafa;
+        }
+        .qty-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 7px;
+        }
+        .qty-col label {
+            font-size: 9px; color: #aaa; text-transform: uppercase;
+            letter-spacing: .03em; display: block; margin-bottom: 3px; font-weight: 700;
+        }
+        .qty-col input {
+            width: 100%; padding: 5px 4px;
+            border: 1.5px solid #e0e0e0; border-radius: 6px;
+            font-size: 13px; text-align: center; background: white;
+            box-sizing: border-box; transition: border-color .2s;
+        }
+        .qty-col input:focus { outline: none; border-color: #e74c3c; }
+        .qty-footer {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .qty-total-box {
+            flex: 1; background: white; border: 1.5px solid #ffe0e0;
+            border-radius: 6px; padding: 4px 8px; text-align: center;
+        }
+        .qty-total-box .kg { font-size: 13px; font-weight: 800; color: #e74c3c; }
+        .qty-total-box .price { font-size: 10px; color: #aaa; }
+        .btn-add-cart {
+            flex-shrink: 0; padding: 7px 12px;
+            background: #e74c3c; color: white;
+            border: none; border-radius: 6px;
+            font-size: 12px; font-weight: 700;
+            cursor: pointer; white-space: nowrap;
+            transition: background .2s, opacity .2s;
+        }
+        .btn-add-cart:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-add-cart:not(:disabled):hover { background: #c0392b; }
 
         .empty-market {
             text-align: center; padding: 60px 20px;
@@ -205,10 +268,11 @@ $all_types = $all_types_result ? $all_types_result->fetch_all(MYSQLI_ASSOC) : []
         }
         .summary-card {
             background: white; border: 1px solid #e8e8e8;
-            border-radius: 8px; padding: 14px 20px;
+            border-radius: 10px; padding: 16px 24px;
             flex: 1; min-width: 120px; text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,.04);
         }
-        .summary-value { font-size: 22px; font-weight: 700; color: #2c3e50; }
+        .summary-value { font-size: 24px; font-weight: 800; color: #2c3e50; }
         .summary-label { font-size: 12px; color: #888; margin-top: 2px; }
     </style>
 </head>
@@ -325,29 +389,31 @@ $all_types = $all_types_result ? $all_types_result->fetch_all(MYSQLI_ASSOC) : []
                             <div class="product-img-placeholder">📦</div>
                         <?php endif; ?>
 
-                        <div>
-                            <div class="product-name"><?php echo htmlspecialchars($p['product_name']); ?></div>
-                            <span class="product-type"><?php echo htmlspecialchars($p['feed_type']); ?></span>
-                        </div>
-
-                        <?php if ($p['description']): ?>
-                            <div class="product-desc"><?php echo htmlspecialchars($p['description']); ?></div>
-                        <?php endif; ?>
-
-                        <div class="product-stats">
-                            <div class="product-stat">
-                                <div class="product-stat-label">Price</div>
-                                <div class="product-stat-value product-price">₱<?php echo number_format($p['unit_price'], 2); ?>/kg</div>
+                        <div class="product-body">
+                            <div>
+                                <div class="product-name"><?php echo htmlspecialchars($p['product_name']); ?></div>
+                                <span class="product-type"><?php echo htmlspecialchars($p['feed_type']); ?></span>
                             </div>
-                            <div class="product-stat">
-                                <div class="product-stat-label">Available</div>
-                                <div class="product-stat-value"><?php echo number_format($p['quantity_available_kg'], 1); ?> kg</div>
+
+                            <?php if ($p['description']): ?>
+                                <div class="product-desc"><?php echo htmlspecialchars($p['description']); ?></div>
+                            <?php endif; ?>
+
+                            <div class="product-stats">
+                                <div class="product-stat">
+                                    <div class="product-stat-label">Price</div>
+                                    <div class="product-stat-value product-price">₱<?php echo number_format($p['unit_price'], 2); ?>/kg</div>
+                                </div>
+                                <div class="product-stat">
+                                    <div class="product-stat-label">Available</div>
+                                    <div class="product-stat-value"><?php echo number_format($p['quantity_available_kg'], 1); ?> kg</div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Order form -->
                         <form method="POST" action="/LechGo_Final/public/supplier/add-to-fd-cart"
-                              class="fd-order-form"
+                              class="product-order-form fd-order-form"
                               data-price="<?php echo $p['unit_price']; ?>"
                               data-max="<?php echo $p['quantity_available_kg']; ?>">
                             <input type="hidden" name="product_id"    value="<?php echo $p['id']; ?>">
@@ -357,30 +423,26 @@ $all_types = $all_types_result ? $all_types_result->fetch_all(MYSQLI_ASSOC) : []
                             <input type="hidden" name="feed_type"     value="<?php echo htmlspecialchars($p['feed_type']); ?>">
                             <input type="hidden" name="quantity_kg" class="fd-qty-hidden" value="0">
 
-                            <div style="display:flex;gap:6px;margin-bottom:6px;">
-                                <div style="flex:1;">
-                                    <label style="font-size:10px;color:#aaa;text-transform:uppercase;display:block;margin-bottom:2px;">Sacks <span style="font-weight:400;">(50kg)</span></label>
-                                    <input type="number" class="fd-sacks" placeholder="0" min="0" step="1" value="0"
-                                           style="width:100%;padding:5px 6px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px;text-align:center;">
+                            <div class="qty-row">
+                                <div class="qty-col">
+                                    <label>Sacks<br><span style="font-weight:400;text-transform:none;">50 kg</span></label>
+                                    <input type="number" class="fd-sacks" placeholder="0" min="0" step="1" value="0">
                                 </div>
-                                <div style="flex:1;">
-                                    <label style="font-size:10px;color:#aaa;text-transform:uppercase;display:block;margin-bottom:2px;">Half <span style="font-weight:400;">(25kg)</span></label>
-                                    <input type="number" class="fd-half" placeholder="0" min="0" step="1" value="0"
-                                           style="width:100%;padding:5px 6px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px;text-align:center;">
+                                <div class="qty-col">
+                                    <label>Half<br><span style="font-weight:400;text-transform:none;">25 kg</span></label>
+                                    <input type="number" class="fd-half" placeholder="0" min="0" step="1" value="0">
                                 </div>
-                                <div style="flex:1;">
-                                    <label style="font-size:10px;color:#aaa;text-transform:uppercase;display:block;margin-bottom:2px;">Extra kg</label>
-                                    <input type="number" class="fd-extra" placeholder="0" min="0" step="0.5" value="0"
-                                           style="width:100%;padding:5px 6px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px;text-align:center;">
+                                <div class="qty-col">
+                                    <label>Extra<br><span style="font-weight:400;text-transform:none;">kg</span></label>
+                                    <input type="number" class="fd-extra" placeholder="0" min="0" step="0.5" value="0">
                                 </div>
                             </div>
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <div style="flex:1;background:#f9f9f9;border:1.5px solid #eee;border-radius:6px;padding:5px 8px;text-align:center;">
-                                    <div style="font-size:13px;font-weight:700;color:#e74c3c;"><span class="fd-total-kg">0</span> kg</div>
-                                    <div style="font-size:11px;color:#aaa;">₱<span class="fd-total-price">0.00</span></div>
+                            <div class="qty-footer">
+                                <div class="qty-total-box">
+                                    <div class="kg"><span class="fd-total-kg">0</span> kg</div>
+                                    <div class="price">₱<span class="fd-total-price">0.00</span></div>
                                 </div>
-                                <button type="submit" class="fd-submit-btn" disabled
-                                        style="flex-shrink:0;padding:8px 14px;background:#e74c3c;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;opacity:0.5;">
+                                <button type="submit" class="btn-add-cart fd-submit-btn" disabled>
                                     Add to Cart
                                 </button>
                             </div>

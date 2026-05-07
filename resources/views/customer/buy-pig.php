@@ -192,15 +192,11 @@ if ($stmt) {
         <!-- Search & Filter Bar -->
         <div class="bp-search-bar">
             <div class="bp-search-group">
-                <label>Min Weight (kg)</label>
-                <input type="number" id="sf_min_weight" min="0" step="1" placeholder="e.g. 50" oninput="applyFilters()">
+                <label>Weight (kg)</label>
+                <input type="number" id="sf_weight" min="0" step="1" placeholder="e.g. 80" oninput="applyFilters()">
             </div>
             <div class="bp-search-group">
-                <label>Max Weight (kg)</label>
-                <input type="number" id="sf_max_weight" min="0" step="1" placeholder="e.g. 120" oninput="applyFilters()">
-            </div>
-            <div class="bp-search-group">
-                <label>Max Price/kg (₱)</label>
+                <label>Price (₱)</label>
                 <input type="number" id="sf_max_price" min="0" step="1" placeholder="e.g. 200" oninput="applyFilters()">
             </div>
             <button class="bp-search-clear" onclick="clearFilters()">Clear</button>
@@ -256,7 +252,7 @@ if ($stmt) {
                     <div class="bp-card-footer">
                         <?php if ($l['status'] === 'reserved'): ?>
                             <button class="bp-btn-buy" disabled style="background:#e67e22;cursor:not-allowed;opacity:.9;">
-                                🔒 Reserved
+                                 Reserved
                             </button>
                         <?php else: ?>
                         <button class="bp-btn-buy" onclick="openInquiry(
@@ -266,7 +262,7 @@ if ($stmt) {
                             <?php echo (float)$l['price_per_kg']; ?>,
                             <?php echo (float)$l['total_price']; ?>,
                             '<?php echo htmlspecialchars(addslashes($l['owner_name'])); ?>'
-                        )">🛒 Buy This Pig</button>
+                        )"> RESERVE </button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -321,28 +317,20 @@ function closeInquiry() {
 }
 
 function applyFilters() {
-    const keyword   = document.getElementById('sf_keyword').value.toLowerCase().trim();
-    const minWeight = parseFloat(document.getElementById('sf_min_weight').value) || 0;
-    const maxWeight = parseFloat(document.getElementById('sf_max_weight').value) || Infinity;
-    const maxPrice  = parseFloat(document.getElementById('sf_max_price').value) || Infinity;
-    const health    = document.getElementById('sf_health').value;
+    const weightFilter = parseFloat(document.getElementById('sf_weight').value) || 0;
+    const maxPrice     = parseFloat(document.getElementById('sf_max_price').value) || Infinity;
 
     const cards = document.querySelectorAll('#bp_grid .bp-card');
     let visible = 0;
 
     cards.forEach(card => {
-        const tag     = card.dataset.tag    || '';
-        const seller  = card.dataset.seller || '';
-        const weight  = parseFloat(card.dataset.weight) || 0;
-        const price   = parseFloat(card.dataset.price)  || 0;
-        const hStatus = card.dataset.health || '';
+        const weight = parseFloat(card.dataset.weight) || 0;
+        const price  = parseFloat(card.dataset.price)  || 0;
 
-        const matchKeyword = !keyword || tag.includes(keyword) || seller.includes(keyword);
-        const matchWeight  = weight >= minWeight && weight <= maxWeight;
-        const matchPrice   = price <= maxPrice;
-        const matchHealth  = !health || hStatus === health;
+        const matchWeight = !weightFilter || weight <= weightFilter;
+        const matchPrice  = price <= maxPrice;
 
-        const show = matchKeyword && matchWeight && matchPrice && matchHealth;
+        const show = matchWeight && matchPrice;
         card.style.display = show ? '' : 'none';
         if (show) visible++;
     });
@@ -352,11 +340,8 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    document.getElementById('sf_keyword').value    = '';
-    document.getElementById('sf_min_weight').value = '';
-    document.getElementById('sf_max_weight').value = '';
-    document.getElementById('sf_max_price').value  = '';
-    document.getElementById('sf_health').value     = '';
+    document.getElementById('sf_weight').value    = '';
+    document.getElementById('sf_max_price').value = '';
     applyFilters();
 }
 

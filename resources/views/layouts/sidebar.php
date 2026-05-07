@@ -74,6 +74,9 @@ $currentPage = $currentPage ?? '';
             <a href="/LechGo_Final/public/livestock-owner/my-orders" class="dashboard-sidebar-nav-item <?php echo $currentPage === 'my-orders' ? 'active' : ''; ?>">
                 <span class="dashboard-sidebar-nav-text">My Orders</span>
             </a>
+            <a href="/LechGo_Final/public/livestock-owner/transaction-logs" class="dashboard-sidebar-nav-item <?php echo $currentPage === 'transaction-logs' ? 'active' : ''; ?>">
+                <span class="dashboard-sidebar-nav-text">Transaction Logs</span>
+            </a>
             <a href="/LechGo_Final/public/livestock-owner/checkout" class="dashboard-sidebar-nav-item <?php echo $currentPage === 'checkout' ? 'active' : ''; ?>">
                 <span class="dashboard-sidebar-nav-text">Checkouts</span>
             </a>
@@ -95,6 +98,9 @@ $currentPage = $currentPage ?? '';
             </a>
             <a href="/LechGo_Final/public/supplier/fd-orders" class="dashboard-sidebar-nav-item <?php echo $currentPage === 'fd-orders' ? 'active' : ''; ?>">
                 <span class="dashboard-sidebar-nav-text">My Feed Purchases</span>
+            </a>
+            <a href="/LechGo_Final/public/supplier/transaction-logs" class="dashboard-sidebar-nav-item <?php echo $currentPage === 'transaction-logs' ? 'active' : ''; ?>">
+                <span class="dashboard-sidebar-nav-text">Transaction Logs</span>
             </a>
             <a href="/LechGo_Final/public/supplier/reports" class="dashboard-sidebar-nav-item <?php echo $currentPage === 'reports' ? 'active' : ''; ?>">
                 <span class="dashboard-sidebar-nav-text">Sales Reports</span>
