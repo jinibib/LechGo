@@ -1,0 +1,26 @@
+-- Create requirements table for piggery application documents
+CREATE TABLE IF NOT EXISTS `requirements` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  `application_id` INT(11) NOT NULL,
+  `farm_name` VARCHAR(255) NOT NULL,
+  `farm_location` TEXT NOT NULL,
+  `business_registration` VARCHAR(255) DEFAULT NULL,
+  `barangay_clearance` VARCHAR(255) DEFAULT NULL,
+  `cpdo_clearance` VARCHAR(255) DEFAULT NULL,
+  `denr_ecc` VARCHAR(255) DEFAULT NULL,
+  `cvo_sanitary_permit` VARCHAR(255) DEFAULT NULL,
+  `business_permit` VARCHAR(255) DEFAULT NULL,
+  `status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  `remarks` TEXT DEFAULT NULL,
+  `reviewed_by` INT(11) DEFAULT NULL,
+  `reviewed_at` DATETIME DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `application_id` (`application_id`),
+  KEY `status` (`status`),
+  CONSTRAINT `fk_requirements_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_requirements_application` FOREIGN KEY (`application_id`) REFERENCES `role_applications` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

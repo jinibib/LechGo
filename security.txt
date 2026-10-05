@@ -1,0 +1,20 @@
+# Security Contact Information
+# This file helps security researchers report vulnerabilities
+
+Contact: mailto:admin@lechgo.freehosting.dev
+Preferred-Languages: en, tl
+Canonical: https://lechgo.freehosting.dev/security.txt
+
+# About this site
+Policy: This is a legitimate web application for livestock and feed management
+Policy: We do NOT collect sensitive financial information
+Policy: All payments are processed through secure third-party gateways
+Policy: We do NOT engage in phishing, malware distribution, or deceptive practices
+
+# Site Purpose
+Purpose: Livestock feed ordering and farm management system
+Purpose: Connects livestock owners, suppliers, and food businesses
+Purpose: Educational/Portfolio project for business management
+
+# If you believe this site was flagged incorrectly by Google Safe Browsing
+Report: This is a false positive - legitimate business application
