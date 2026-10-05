@@ -1,0 +1,184 @@
+# 🐖🔥 LEchGO — Lechon Supply Chain and Ordering Management System
+
+---
+
+## 📌 Project Overview
+
+**LEchGO** is a comprehensive web-based platform designed to revolutionize the traditional lechon industry by creating a digital ecosystem that connects all stakeholders in the supply chain. The system integrates customers, lechoneros (lechon cookers), livestock owners, pig caretakers, feed suppliers, and logistics partners into one centralized marketplace.
+
+The platform addresses critical inefficiencies in the traditional lechon supply chain by providing:
+- **Real-time inventory management** for swine and feed products
+- **Automated order processing** and payment verification
+- **Production cost tracking** to help reduce operational expenses
+- **Integrated feed supply chain** connecting livestock owners with feed distributors
+- **Delivery coordination** and tracking
+- **Multi-role authentication** with role-based access control (RBAC)
+
+This project was developed as an academic requirement for the **Bachelor of Science in Information Technology (BSIT)** program, with a focus on sustainable agricultural technology and economic development.
+
+---
+
+## 🚨 Problem Statement
+
+The traditional lechon industry in the Philippines faces several critical challenges:
+
+1. **High Production Costs**: Pork production costs have persistently increased to ₱350/kg, making it difficult for small-scale producers to remain profitable.
+
+2. **Supply Chain Inefficiencies**: Lack of coordination between livestock owners, feed suppliers, caretakers, and lechoneros leads to:
+   - Delayed order fulfillment
+   - Inventory mismanagement
+   - Communication breakdowns
+   - Increased operational costs
+
+3. **Manual Processes**: Traditional paper-based systems for:
+   - Order tracking
+   - Payment verification
+   - Feed inventory management
+   - Production scheduling
+
+4. **Limited Market Access**: Small-scale lechoneros and livestock owners struggle to reach customers directly, relying on intermediaries that reduce profit margins.
+
+5. **Cost Tracking Challenges**: Producers lack tools to accurately track and analyze production costs (feed, labor, utilities, maintenance) to identify cost-reduction opportunities.
+
+**LEchGO** addresses these challenges by providing a digital platform that streamlines operations, reduces costs, and improves market access for all stakeholders.
+
+---
+
+## 🎯 Project Objectives
+
+### Primary Objectives
+
+1. **Centralized Marketplace**: Create a unified platform connecting all stakeholders in the lechon supply chain
+2. **Cost Reduction**: Help producers track and reduce production costs through data-driven insights
+3. **Supply Chain Optimization**: Streamline feed ordering, inventory management, and delivery coordination
+4. **Payment Integration**: Implement secure online payment processing with PayMongo integration
+5. **Quality Assurance**: Enable customer feedback and rating systems to maintain service quality
+
+### Specific Goals
+
+- Reduce pork production costs from the current ₱350/kg baseline
+- Automate feed ordering and receipt generation for livestock owners
+- Provide real-time inventory tracking for pig caretakers
+- Enable online payment options for feed suppliers and customers
+- Track production costs including:
+  - Feed costs
+  - Labor costs
+  - Utilities (water, electricity)
+  - Fixed costs (taxes, permits, salaries, maintenance)
+- Calculate cost per kilogram and percentage cost reduction over time
+- Improve coordination between production and delivery schedules
+- Support sustainable and affordable lechon purchasing
+
+---
+
+## 👥 Target Users / Personas
+
+### 1. **Customer** 👤
+**Profile**: Individual or business looking to order lechon for events
+
+- **Needs**: Easy browsing, secure payment, delivery tracking, quality assurance
+- **Goals**: Find reliable lechoneros, transparent pricing, timely delivery
+- **Pain Points**: Difficulty finding verified vendors, payment concerns, delivery uncertainty
+
+### 2. **Lechonero** 👨‍🍳
+**Profile**: Professional lechon cooker/preparer
+
+- **Needs**: Order management, cooking schedule coordination, payment tracking
+- **Goals**: Increase customer base, manage multiple orders efficiently, maintain reputation
+- **Pain Points**: Manual scheduling, payment verification delays, customer communication
+
+### 3. **Livestock Owner** 🐷
+**Profile**: Farm owner raising pigs for lechon production
+
+- **Needs**: Feed ordering, cost tracking, inventory management, caretaker coordination
+- **Goals**: Reduce production costs, optimize feed purchasing, track profitability
+- **Pain Points**: High feed costs, manual record-keeping, difficulty tracking expenses
+
+### 4. **Pig Caretaker** 👷
+**Profile**: Farm worker responsible for daily pig care and feeding
+
+- **Needs**: Feeding schedule management, health monitoring, cage assignment
+- **Goals**: Efficient daily operations, accurate record-keeping, inventory tracking
+- **Pain Points**: Manual feeding logs, inventory shortages, communication with owners
+
+### 5. **Feed Supplier/Distributor** 🌾
+**Profile**: Business providing pig feed products
+
+- **Needs**: Order management, inventory tracking, payment processing, delivery coordination
+- **Goals**: Expand customer base, streamline order fulfillment, secure payments
+- **Pain Points**: Manual order processing, payment verification, delivery scheduling
+
+### 6. **Logistics Partner** 🚚
+**Profile**: Delivery service provider
+
+- **Needs**: Delivery scheduling, route optimization, status updates
+- **Goals**: Efficient deliveries, clear communication, timely payments
+- **Pain Points**: Poor coordination, address issues, payment delays
+
+### 7. **System Administrator** 🔧
+**Profile**: Technical staff managing the platform
+
+- **Needs**: User verification, system monitoring, data management
+- **Goals**: Platform stability, user satisfaction, security maintenance
+- **Pain Points**: Manual verification processes, system issues, user support
+
+---
+
+## � Project Structure
+
+```
+LECHGO/
+│
+├── app/
+│   ├── controllers/          # Request handlers and business logic
+│   ├── models/               # Database operations and business logic
+│   ├── middleware/           # Request filtering and authentication
+│   └── services/             # External service integrations
+│
+├── config/                   # Configuration files
+│   ├── db.php               # Database connection
+│   ├── email.php            # Email configuration
+│   └── roles.php            # Role definitions
+│
+├── database/                 # Database schemas and migrations
+│   ├── lechgo_db new.sql    # Main database schema
+│   └── migrations/          # Database migration scripts
+│
+├── public/                   # Publicly accessible files
+│   ├── index.php            # Application entry point and router
+│   ├── styles.css           # Global styles
+│   ├── script.js            # Global JavaScript
+│   └── uploads/             # User-uploaded files
+│
+├── resources/                # Views and templates
+│   └── views/               # HTML/PHP view files
+│
+├── PHPMailer-master/         # Email library
+│
+├── .env                      # Environment variables
+├── composer.json            # PHP dependencies
+├── README.md                # This file
+└── PAYMONGO_SETUP.md        # PayMongo integration guide
+```
+
+---
+
+## 👩‍💻 Developer
+
+**Jennyvieve Nioda Mahinay**
+- Program: Bachelor of Science in Information Technology (BSIT-II)
+- Email: jennyvievemahinay@gmail.com
+
+---
+
+## � License
+
+This system is developed for **academic purposes only** as part of the Bachelor of Science in Information Technology (BSIT) program.
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the Filipino Lechon Industry**
+
+</div>
